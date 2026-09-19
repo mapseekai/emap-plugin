@@ -1,0 +1,19 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "emap-plugin management"
+    },
+    {
+      "path": "repos/emap-gdal-plugin"
+    },
+    {
+      "path": "repos/emap-postgis-plugin"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/node_modules": true
+    }
+  }
+}

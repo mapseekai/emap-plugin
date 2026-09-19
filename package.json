@@ -1,0 +1,16 @@
+{
+  "name": "emap-plugin",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18 <25"
+  },
+  "scripts": {
+    "bootstrap": "node scripts/repos.mjs install",
+    "build": "node scripts/repos.mjs build",
+    "test": "node --test test/*.test.mjs && node scripts/repos.mjs test",
+    "verify": "node --test test/*.test.mjs && node scripts/repos.mjs verify",
+    "new:plugin": "node scripts/new-plugin.mjs"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@mapseekai/emap-__SLUG__-plugin",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MPL-2.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}},
+  "files": ["dist", "README.md", "LICENSE"],
+  "sideEffects": false,
+  "engines": {"node": ">=22.18 <25"},
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test test/plugin.test.mjs",
+    "verify": "npm run typecheck && npm test",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {"cordis": "4.0.0-rc.10", "@mapseekai/emap": "^0.13.0"},
+  "devDependencies": {"typescript": "5.9.3", "cordis": "4.0.0-rc.10"},
+  "publishConfig": {"access": "public"}
+}

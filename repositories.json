@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "repositories": [
+    {
+      "name": "emap-gdal-plugin",
+      "path": "repos/emap-gdal-plugin",
+      "package": "@mapseekai/emap-gdal-plugin",
+      "remote": null
+    },
+    {
+      "name": "emap-postgis-plugin",
+      "path": "repos/emap-postgis-plugin",
+      "package": "@mapseekai/emap-postgis-plugin",
+      "remote": null
+    }
+  ]
+}
