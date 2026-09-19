@@ -6,7 +6,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-test('creates independent plugin and rejects unsafe or duplicate names', () => {
+test('creates monorepo plugin package and rejects unsafe or duplicate names', () => {
   const temporary = mkdtempSync(resolve(tmpdir(), 'emap-plugin-scaffold-'));
   try {
     mkdirSync(resolve(temporary, 'scripts'));
@@ -18,7 +18,7 @@ test('creates independent plugin and rejects unsafe or duplicate names', () => {
     assert.equal(run('terrain', '--dry-run').status, 0);
     assert.equal(existsSync(resolve(temporary, 'repos')), false);
     const result = run('terrain'); assert.equal(result.status, 0, result.stderr);
-    assert.equal(existsSync(resolve(temporary, 'repos/emap-terrain-plugin/.git')), true);
+    assert.equal(existsSync(resolve(temporary, 'repos/emap-terrain-plugin/.git')), false);
     const registry = JSON.parse(readFileSync(resolve(temporary, 'repositories.json'), 'utf8'));
     assert.equal(registry.repositories[0].package, '@mapseekai/emap-terrain-plugin');
     assert.match(readFileSync(resolve(temporary, 'repos/emap-terrain-plugin/src/index.ts'), 'utf8'), /terrainPlugin/);

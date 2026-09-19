@@ -1,0 +1,20 @@
+import { it, expect } from 'vitest';
+import { Context } from 'cordis';
+import { postgisPlugin } from '../src/index.ts';
+it('native provider installs, isolates maps, restarts and disposes', async () => {
+  const firstContext = new Context(); const secondContext = new Context();
+  const options = { endpoint: 'https://example.com/postgis', fetch: async () => Response.json([]) };
+  const firstFiber = firstContext.plugin(postgisPlugin(options));
+  const secondFiber = secondContext.plugin(postgisPlugin(options));
+  await firstFiber.await(); await secondFiber.await();
+  const first = firstContext.postgis;
+  expect(first).not.toBe(secondContext.postgis);
+  expect(await first.connections()).toEqual([]);
+  await firstFiber.restart(); await firstFiber.await();
+  expect(firstContext.postgis).not.toBe(first);
+  await expect(first.connections()).rejects.toMatchObject({ code: 'DISPOSED' });
+  expect(await secondContext.postgis.connections()).toEqual([]);
+  const restarted = firstContext.postgis;
+  await firstFiber.dispose(); await secondFiber.dispose();
+  await expect(restarted.connections()).rejects.toMatchObject({ code: 'DISPOSED' });
+});

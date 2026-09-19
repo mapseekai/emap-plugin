@@ -1,7 +1,6 @@
 import { readFileSync, writeFileSync, existsSync, cpSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const slug = process.argv[2];
 if (!slug || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 50)
@@ -15,7 +14,7 @@ const registry = JSON.parse(readFileSync(registryFile, 'utf8'));
 if (existsSync(target) || registry.repositories.some((repo) => repo.name === name))
   throw new Error(`Plugin already exists: ${name}`);
 if (process.argv.includes('--dry-run')) {
-  console.log(`Would create independent repository: ${target}`);
+  console.log(`Would create plugin package: ${target}`);
   process.exit(0);
 }
 mkdirSync(resolve(root, 'repos'), { recursive: true });
@@ -26,8 +25,6 @@ for (const filename of ['package.json', 'src/index.ts', 'test/plugin.test.mjs', 
   const contents = readFileSync(path, 'utf8').replaceAll('__SLUG__', slug).replaceAll('__SERVICE__', service);
   writeFileSync(path, contents);
 }
-const result = spawnSync('git', ['init', '-b', 'main', target], { stdio: 'inherit' });
-if (result.error || result.status !== 0) throw result.error ?? new Error('Git initialization failed');
-registry.repositories.push({ name, path: relativePath, package: `@mapseekai/${name}`, remote: null });
+registry.repositories.push({ name, path: relativePath, package: `@mapseekai/${name}` });
 writeFileSync(registryFile, JSON.stringify(registry, null, 2) + '\n');
-console.log(`Created ${relativePath}. Run npm install and npm run verify inside that repository.`);
+console.log(`Created ${relativePath}. It is tracked by the root Git repository; run npm install and npm run verify inside the package.`);

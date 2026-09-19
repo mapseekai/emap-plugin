@@ -1,0 +1,37 @@
+name: PostGIS plugin CI
+
+on:
+  push:
+    paths:
+      - 'repos/emap-postgis-plugin/**'
+      - '.agents/skills/emap-plugin-development/**'
+      - 'templates/**'
+      - 'scripts/**'
+      - 'test/**'
+      - '.github/workflows/postgis-ci.yml'
+  pull_request:
+    paths:
+      - 'repos/emap-postgis-plugin/**'
+      - '.agents/skills/emap-plugin-development/**'
+      - 'templates/**'
+      - 'scripts/**'
+      - 'test/**'
+      - '.github/workflows/postgis-ci.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: repos/emap-postgis-plugin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: repos/emap-postgis-plugin/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run verify:all
+      - run: npm pack --dry-run

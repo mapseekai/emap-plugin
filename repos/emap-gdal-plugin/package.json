@@ -1,0 +1,81 @@
+{
+  "name": "@mapseekai/emap-gdal-plugin",
+  "version": "0.1.0",
+  "description": "Native Cordis GDAL provider for emap, with isolated browser Workers and external raster pyramids",
+  "type": "module",
+  "license": "MPL-2.0",
+  "engines": {
+    "node": ">=22.18 <25"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./geotiff": {
+      "types": "./dist/geotiff.d.ts",
+      "import": "./dist/geotiff.js"
+    },
+    "./assets/*": "./dist/assets/*",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "emap-gdal-copy-assets": "scripts/copy-assets.mjs"
+  },
+  "files": [
+    "dist",
+    "scripts/copy-assets.mjs",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "docs",
+    "third-party"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-assets.mjs dist/assets/gdal",
+    "test": "vitest run",
+    "test:browser": "node test/browser/run.mjs",
+    "verify": "npm run typecheck && npm test && npm run build && npm run package:check && npm run test:browser",
+    "dev": "npm run build && node scripts/copy-assets.mjs examples/public/gdal && vite examples --host 127.0.0.1",
+    "prepack": "npm run build",
+    "package:check": "node scripts/check-package.mjs",
+    "prepublishOnly": "npm run verify"
+  },
+  "dependencies": {
+    "@mapseekai/gdal3.js": "2.8.2"
+  },
+  "peerDependencies": {
+    "@mapseekai/emap": "^0.13.0",
+    "cordis": "4.0.0-rc.10"
+  },
+  "devDependencies": {
+    "@mapseekai/emap": "0.13.0",
+    "@playwright/test": "1.62.1",
+    "@types/node": "^22.0.0",
+    "cordis": "4.0.0-rc.10",
+    "esbuild": "0.25.12",
+    "geotiff": "3.0.5",
+    "typescript": "5.9.3",
+    "vite": "7.3.6",
+    "vitest": "4.1.9"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "author": "mapseekai",
+  "keywords": [
+    "emap",
+    "gdal",
+    "gis",
+    "geotiff",
+    "overviews",
+    "pyramid",
+    "webassembly",
+    "cordis"
+  ]
+}

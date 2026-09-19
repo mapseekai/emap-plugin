@@ -1,6 +1,6 @@
 ---
 name: emap-plugin-development
-description: Develop independent emap plugins in the emap-plugin multi-repository project using native Cordis. Use for scaffolding a plugin, Provider/Service lifecycle, feature composition, format codecs, controls, interaction extensions, AI capabilities, or Emap.create integration. Not a guide for modifying emap core, publishing packages without authorization, or unrelated application work.
+description: Develop independently published emap plugin packages in the emap-plugin monorepo using native Cordis. Use for scaffolding a plugin, Provider/Service lifecycle, feature composition, format codecs, controls, interaction extensions, AI capabilities, or Emap.create integration. Not a guide for modifying emap core, publishing packages without authorization, or unrelated application work.
 user-invocable: false
 ---
 
@@ -13,16 +13,16 @@ Only load [integration patterns](references/patterns.md) for the kind of plugin 
 
 ## Repository and API boundaries
 
-- `repos/<name>` is an independent Git repository with its own package, lockfile,
-  version, tests and release cycle; the management repository ignores its source.
+- `repos/<name>` is tracked by the root Git repository and has its own npm package, lockfile,
+  version, tests and release cycle. Packages publish independently; Git history is shared.
 - Create a plugin from the management root: `npm run new:plugin -- <slug>`.
   The [template](../../../templates/plugin/README.md) includes standalone development rules.
 - `@mapseekai/emap` is a peer dependency. Use only its public package exports;
   inspect the installed version's declarations, not private source/deep imports.
 - The current baseline is emap `0.13.0` and `cordis@4.0.0-rc.10`. Keep Cordis pinned
   as a peer and external to ESM bundles; do not upgrade it as incidental cleanup.
-- A standalone plugin checkout may not have this management repository beside it.
-  Its own `AGENTS.md`, `README.md` and package scripts remain usable without it.
+- Do not create nested Git repositories under `repos/`. Package build/runtime code must remain
+  usable independently of root tooling, while development commits and pushes happen at the root.
 - Ordinary plugin work must not patch host internals or invent a replacement SDK.
   A missing host extension point is a separate host change, not a deep-import workaround.
 

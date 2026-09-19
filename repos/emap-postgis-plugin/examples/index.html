@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>emap · PostGIS SELECT</title>
+  <style>
+    body { margin:0; font:14px system-ui; } header { padding:12px; background:#f5f7fa; }
+    label { margin-right:12px; } input { width:260px; padding:6px; }
+    button { padding:7px 16px; } #map { height:calc(100vh - 96px); min-height:400px; }
+    #status { display:block; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <header><form id="connect">
+    <label>查询服务 <input id="endpoint" value="http://127.0.0.1:8787/postgis" required></label>
+    <label>应用令牌 <input id="token" type="password" autocomplete="off" required></label>
+    <button type="submit">连接并打开查询面板</button>
+  </form><span id="status">请输入应用 API 令牌，不要输入数据库密码。令牌不保存到本地存储。</span></header>
+  <div id="map"></div><script type="module" src="/main.ts"></script>
+</body>
+</html>

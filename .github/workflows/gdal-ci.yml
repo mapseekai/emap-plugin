@@ -1,0 +1,37 @@
+name: GDAL plugin CI
+
+on:
+  push:
+    paths:
+      - 'repos/emap-gdal-plugin/**'
+      - '.agents/skills/emap-plugin-development/**'
+      - 'templates/**'
+      - 'scripts/**'
+      - 'test/**'
+      - '.github/workflows/gdal-ci.yml'
+  pull_request:
+    paths:
+      - 'repos/emap-gdal-plugin/**'
+      - '.agents/skills/emap-plugin-development/**'
+      - 'templates/**'
+      - 'scripts/**'
+      - 'test/**'
+      - '.github/workflows/gdal-ci.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: repos/emap-gdal-plugin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: repos/emap-gdal-plugin/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run verify
+      - run: npm pack --dry-run

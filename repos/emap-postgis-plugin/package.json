@@ -1,0 +1,85 @@
+{
+  "name": "@mapseekai/emap-postgis-plugin",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Read-only PostGIS SQL gateway and native Cordis vector layers for emap",
+  "license": "MPL-2.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./layers": {
+      "types": "./dist/layers.d.ts",
+      "import": "./dist/layers.js"
+    },
+    "./control": {
+      "types": "./dist/control.d.ts",
+      "import": "./dist/control.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.js"
+    },
+    "./package.json": "./package.json",
+    "./dataset": {
+      "types": "./dist/dataset.d.ts",
+      "import": "./dist/dataset.js"
+    },
+    "./worker": "./dist/dataset-worker.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "docs",
+    "examples/server.mjs",
+    "examples/.env.example",
+    "deploy"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.18 <25"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/build-worker.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:integration": "node test/integration/run.mjs",
+    "test:browser": "node test/browser/run.mjs",
+    "package:check": "node scripts/check-package.mjs",
+    "verify": "npm run typecheck && npm test && npm run build && npm run package:check",
+    "verify:all": "npm run verify && npm run test:integration && npm run test:browser",
+    "dev": "vite examples --host 127.0.0.1",
+    "start:server": "node --env-file=.env examples/server.mjs",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run verify:all"
+  },
+  "dependencies": {
+    "@types/pg": "8.23.1",
+    "pg": "8.23.0",
+    "pg-cursor": "^2.15.3",
+    "pgsql-parser": "18.2.8"
+  },
+  "peerDependencies": {
+    "@mapseekai/emap": "^0.13.0",
+    "cordis": "4.0.0-rc.10"
+  },
+  "devDependencies": {
+    "@mapseekai/emap": "0.13.0",
+    "@playwright/test": "1.62.1",
+    "@types/node": "^22.0.0",
+    "@types/pg-cursor": "^2.7.2",
+    "cordis": "4.0.0-rc.10",
+    "esbuild": "0.25.12",
+    "rollup": "4.63.3",
+    "typescript": "5.9.3",
+    "vite": "7.3.6",
+    "vitest": "4.1.9"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

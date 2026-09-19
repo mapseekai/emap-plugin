@@ -1,3 +1,9 @@
-repos/*/
 .DS_Store
 node_modules/
+**/node_modules/
+**/dist/
+**/test-results/
+*.tgz
+.env
+.env.*
+!.env.example

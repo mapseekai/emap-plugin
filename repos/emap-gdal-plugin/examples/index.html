@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>emap GDAL 插件 · 金字塔演示</title>
+  <style>
+    body{font:16px/1.6 system-ui,sans-serif;max-width:880px;margin:48px auto;padding:0 24px}
+    fieldset{padding:24px;margin:24px 0}label{display:block;margin:12px 0}
+    input,select,button{font:inherit;padding:6px}button{margin-right:12px}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:16px;background:#f4f5f6}
+    a{display:block;margin:8px 0}small{display:block}
+  </style>
+</head>
+<body>
+  <h1>GDAL 外部金字塔</h1>
+  <p>浏览器本地 Worker 计算；不上传文件，不改写原始影像。生成的 .ovr 可交给 emap。</p>
+  <fieldset><legend>输入与设置</legend>
+    <label>栅格文件 <input id="file" type="file" accept=".tif,.tiff,.img,.vrt"></label>
+    <label>缩小因子（留空自动） <input id="levels" placeholder="2,4,8,16"></label>
+    <label>重采样 <select id="method"><option>nearest</option><option>average</option><option>bilinear</option><option>cubic</option><option>mode</option></select></label>
+    <button id="build">创建金字塔</button><button id="cancel" disabled>取消</button>
+  </fieldset>
+  <small>默认 DEFLATE 压缩；自动层级的最小尺寸为 256。进度仅表示阶段，不是 GDAL 原生百分比。</small>
+  <pre id="status" aria-live="polite">请选择文件。</pre><section id="outputs"></section>
+  <script type="module" src="/main.ts"></script>
+</body>
+</html>

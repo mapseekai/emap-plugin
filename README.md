@@ -1,25 +1,40 @@
 # emap-plugin
 
-emap 外部插件的多仓库开发入口。首个插件是 `@mapseekai/emap-gdal-plugin`。
+emap 外部插件的单仓库管理项目。插件源码统一提交到这个 GitHub 仓库，但每个插件作为独立 npm 包单独版本、验证和发布。
 
 ```text
-emap-plugin/                    # 管理仓库（独立 Git）
-  repositories.json             # 仓库清单；remote=null 表示尚未配置远端
+emap-plugin/
+  repositories.json             # 插件目录 / npm 包清单
   scripts/                      # 批量校验及新插件脚手架
   repos/
-    emap-gdal-plugin/            # GDAL / 栅格金字塔
-    emap-postgis-plugin/         # PostGIS SELECT 查询及矢量图层（独立仓库）
+    emap-gdal-plugin/           # @mapseekai/emap-gdal-plugin
+    emap-postgis-plugin/        # @mapseekai/emap-postgis-plugin
 ```
 
-`repos/*` 不提交到管理仓库。每个插件需单独提交/推送；管理仓库不假装保存子仓库源码。
-目前只创建本地 Git 仓库，没有创建远端、提交或发布。配置远端后分别 clone 到清单指定路径。
-可以在将来有确定远端时改为 Git submodule；当前不创建无效的 `.gitmodules`。
+两个插件都由本仓库 Git 跟踪，不使用子仓库、submodule 或嵌套 `.git`。新增插件也直接进入 `repos/` 并随根仓库提交。
 
 ```sh
-npm run bootstrap     # 各仓库 npm ci；首次无锁文件时 npm install
-npm run verify        # 各仓库类型、单元测试、构建和浏览器验证
-npm run new:plugin -- terrain
+npm run bootstrap               # 各插件 npm ci；首次无锁文件时 npm install
+npm run build                   # 逐插件构建
+npm run test                    # 根脚手架测试 + 逐插件测试
+npm run verify                  # 根脚手架测试 + 逐插件 verify
+npm run new:plugin -- terrain   # 在 repos/ 下创建一个新的独立 npm 包
 ```
+
+## 独立发布
+
+Git 仓库统一，但 npm 包仍单独发布。进入目标插件目录执行其自己的发布流程：
+```sh
+cd repos/emap-gdal-plugin
+npm run verify
+npm publish
+
+cd ../emap-postgis-plugin
+npm run verify:all
+npm publish
+```
+
+是否实际发布由维护者决定；根仓库不会自动把所有插件一起发版。每个插件保留自己的 `package.json`、版本号、package-lock 和 `prepublishOnly`。
 
 GDAL 使用方式、WASM 部署、金字塔 API、emap 接入见
 [GDAL 插件 README](repos/emap-gdal-plugin/README.md)。
@@ -31,10 +46,8 @@ PostGIS 查询服务和地图接入见 [PostGIS 插件 README](repos/emap-postgi
 开发前阅读本仓库的 [AGENTS.md](AGENTS.md) 与
 [插件开发 skill](.agents/skills/emap-plugin-development/SKILL.md)。
 格式、控件、能力与服务接入见 skill 的 [本地参考](.agents/skills/emap-plugin-development/references/patterns.md)。
-这些规范在管理仓库维护，不再依赖宿主源码仓库中的文档或 skill 路径。
+这些规范在根仓库维护，不依赖宿主源码仓库中的文档或 skill 路径。
 
 [新插件模板](templates/plugin/README.md) 会携带自己的 `AGENTS.md`。
-在 `repos/<name>` 布局内使用管理仓库的统一规范；插件单独克隆后，若管理仓库不在相对位置，
-按该插件自己的 `AGENTS.md`、`README.md` 和 `package.json` 开发，不把管理目录当作运行时依赖。
-修改统一规范只需更新此处的 skill，不在多个仓库维护重复副本。
-工作区文件包含本项目、GDAL 和 PostGIS 插件，不要求存在同级宿主源码目录。
+插件运行时不依赖管理目录，但开发、提交与推送都以本 Git 根仓库为边界。
+工作区文件包含管理项目、GDAL 和 PostGIS 插件，不要求存在同级宿主源码目录。

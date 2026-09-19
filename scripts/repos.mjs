@@ -9,7 +9,7 @@ const { repositories } = JSON.parse(readFileSync(resolve(root, 'repositories.jso
 for (const repo of repositories) {
   const cwd = resolve(root, repo.path);
   if (!cwd.startsWith(root + '/') || !existsSync(resolve(cwd, 'package.json'))) {
-    throw new Error(`Missing repository: ${repo.path}. Clone its registered remote first.`);
+    throw new Error(`Missing plugin package: ${repo.path}. Restore it from this monorepo checkout.`);
   }
   console.log(`\n=== ${repo.name}: ${operation} ===`);
   const args = operation === 'install'
