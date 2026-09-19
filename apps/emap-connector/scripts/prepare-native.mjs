@@ -1,0 +1,21 @@
+import { cp, mkdir, chmod, writeFile, rm } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const host = execFileSync('rustc', ['-vV'], { encoding: 'utf8' }).match(/^host: (.+)$/m)?.[1];
+const expected = { win32: 'windows', darwin: 'darwin', linux: 'linux' }[process.platform];
+if (!host || !expected || !host.includes(expected)) throw new Error('Build each OS on a matching native Rust runner');
+if (process.env.TAURI_ENV_TARGET_TRIPLE && process.env.TAURI_ENV_TARGET_TRIPLE !== host) throw new Error('Use a native runner for the requested target');
+const binaryDir = resolve(root,'src-tauri/binaries');
+// This directory holds generated sidecars only; remove obsolete Node binaries.
+await rm(binaryDir,{recursive:true,force:true}); await mkdir(binaryDir,{recursive:true});
+const name='emap-connector-service', extension=process.platform==='win32'?'.exe':'';
+const target=resolve(binaryDir,`${name}-${host}${extension}`);
+await cp(resolve(root,'dist/service',name+extension),target);
+if (process.platform!=='win32') await chmod(target,0o755);
+const resourceDir=resolve(root,'src-tauri/runtime');
+await rm(resourceDir,{recursive:true,force:true});await mkdir(resourceDir,{recursive:true});
+for (const name of ['THIRD-PARTY-NOTICES.txt','runtime-dependencies.json']) await cp(resolve(root,'dist/service',name),resolve(resourceDir,name));
+await writeFile(resolve(resourceDir,'build-info.json'),JSON.stringify({engine:'native-rust',rustHost:host,nodeBundled:false,protocolVersion:1},null,2));
+console.log('Prepared native PostGIS service for',host,'(no Node runtime)');

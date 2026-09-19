@@ -12,13 +12,14 @@ for (const [key, entry] of Object.entries(pkg.exports)) {
     await access(new URL('../' + entry[field], import.meta.url));
   }
 }
-const result = await build({ entryPoints: ['dist/index.js', 'dist/layers.js', 'dist/control.js'],
+const result = await build({ entryPoints: ['dist/index.js', 'dist/layers.js', 'dist/control.js', 'dist/connector.js', 'dist/connector-client.js'],
   bundle: true, format: 'esm', platform: 'browser', target: 'es2022', write: false,
   outdir: 'test-results/package', metafile: true, external: ['cordis', '@mapseekai/emap', '@mapseekai/emap/*'],
 });
 for (const input of Object.keys(result.metafile.inputs))
   assert(!/node_modules\/(pg|pg-cursor|pgsql-parser|libpg-query)\//.test(input), `Server dependency leaked into browser: ${input}`);
-const packed = spawnSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { encoding: 'utf8' });
+if (!process.env.npm_execpath) throw new Error('Run package:check through npm');
+const packed = spawnSync(process.execPath, [process.env.npm_execpath, 'pack', '--dry-run', '--json', '--ignore-scripts'], { encoding: 'utf8' });
 assert.equal(packed.status, 0, packed.stderr);
 const files = JSON.parse(packed.stdout)[0].files.map((file) => file.path);
 assert(files.includes('dist/index.js') && files.includes('dist/server/index.js'));

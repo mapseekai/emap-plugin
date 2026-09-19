@@ -51,3 +51,19 @@ PostGIS 查询服务和地图接入见 [PostGIS 插件 README](repos/emap-postgi
 [新插件模板](templates/plugin/README.md) 会携带自己的 `AGENTS.md`。
 插件运行时不依赖管理目录，但开发、提交与推送都以本 Git 根仓库为边界。
 工作区文件包含管理项目、GDAL 和 PostGIS 插件，不要求存在同级宿主源码目录。
+
+## 本地数据库连接器
+
+`apps/emap-connector/` 是独立的 Tauri 桌面应用，不通过 npm 发布，复用 PostGIS 插件的公开网关。
+支持网页自定义协议唤起、本地授权、系统凭据存储及按站点/连接限制的短期会话。
+Windows x64、macOS ARM64/Intel、Linux x64 的原生构建配置和验证边界见
+[连接器 README](apps/emap-connector/README.md)。
+
+```sh
+npm run connector:verify        # 需先安装/构建 PostGIS 插件及连接器依赖
+npm run connector:dev
+npm run connector:build
+```
+
+桌面应用不计入 `repositories.json` 的独立 npm 插件清单；根 `verify` 仍只验证登记插件。
+连接器有单独的 `.github/workflows/connector-ci.yml`，CI 产物不等同于正式签名发布。

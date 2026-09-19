@@ -1,6 +1,6 @@
 {
   "name": "@mapseekai/emap-postgis-plugin",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "Read-only PostGIS SQL gateway and native Cordis vector layers for emap",
   "license": "MPL-2.0",
@@ -28,7 +28,15 @@
       "types": "./dist/dataset.d.ts",
       "import": "./dist/dataset.js"
     },
-    "./worker": "./dist/dataset-worker.js"
+    "./worker": "./dist/dataset-worker.js",
+    "./connector": {
+      "types": "./dist/connector.d.ts",
+      "import": "./dist/connector.js"
+    },
+    "./connector-client": {
+      "types": "./dist/connector-client.d.ts",
+      "import": "./dist/connector-client.js"
+    }
   },
   "files": [
     "dist",

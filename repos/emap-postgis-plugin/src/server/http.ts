@@ -1,8 +1,9 @@
+import { once } from 'node:events';
 import { createServer } from 'node:http';
 import type { IncomingMessage, Server } from 'node:http';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { PostgisError } from '../errors.js';
-import type { FeatureQueryRequest } from '../types.js';
+import type { FeatureQueryRequest, WkbStreamRequest } from '../types.js';
 import type { PostgisGateway } from './gateway.js';
 export interface ServerOptions {
   gateway: PostgisGateway;
@@ -67,13 +68,22 @@ export function createPostgisServer(options: ServerOptions): Server {
       const path = url.pathname.slice(prefix.length); let result: unknown;
       if (request.method === 'GET' && path === '/connections') result = options.gateway.connections();
       else if (request.method === 'GET' && path === '/tables') result = await options.gateway.tables(url.searchParams.get('connectionId') ?? '', task.signal);
-      else if (request.method === 'POST' && ['/query', '/wkb', '/test'].includes(path)) {
+      else if (request.method === 'POST' && ['/query', '/wkb', '/test', '/wkb/stream'].includes(path)) {
         if (!request.headers['content-type']?.toLowerCase().startsWith('application/json'))
           throw new PostgisError('CONTENT_TYPE', 'Use application/json', 415);
         const body = await readBody(request);
-        const allowed = new Set(['connectionId', 'sql', 'parameters', 'limit', 'offset', 'geometryColumn', 'idColumn', 'sourceSrid', 'targetSrid', 'format']);
+        const allowed = new Set(['connectionId', 'sql', 'parameters', 'limit', 'offset', 'geometryColumn', 'idColumn', 'sourceSrid', 'targetSrid', 'format', ...(path === '/wkb/stream' ? ['batchSize', 'maxRows'] : [])]);
         if (Object.keys(body).some((key) => !allowed.has(key)) || typeof body.connectionId !== 'string')
           throw new PostgisError('INVALID_ARGUMENT', 'Use a configured connectionId and documented query fields only');
+        if (path === '/wkb/stream') {
+          if (body.limit !== undefined || body.offset !== undefined) throw new PostgisError('INVALID_ARGUMENT','Streaming uses maxRows rather than limit/offset');
+          response.setHeader('Content-Type','application/x-ndjson');
+          await options.gateway.streamWkb(body as unknown as WkbStreamRequest, async frame => {
+            task.signal.throwIfAborted();
+            if (!response.write(JSON.stringify(frame) + '\n')) await once(response,'drain',{ signal: task.signal });
+          },task.signal);
+          response.end(); return;
+        }
         if (path === '/test') result = await options.gateway.testConnection(body.connectionId, task.signal);
         else if (path === '/query') result = await options.gateway.query(body as unknown as FeatureQueryRequest, task.signal);
         else result = await options.gateway.queryWkb(body as unknown as FeatureQueryRequest, task.signal);
@@ -85,6 +95,11 @@ export function createPostgisServer(options: ServerOptions): Server {
     } catch (error) {
       if (!response.destroyed && !response.writableEnded) {
         const safe = error instanceof PostgisError ? error : new PostgisError('INTERNAL_ERROR', 'Request failed', 500);
+        if (response.headersSent) {
+          response.end(JSON.stringify({ type:'error', error:{ code:safe.code, message:safe.message } }) + '\n');
+          return;
+        }
+        response.setHeader('Content-Type','application/json; charset=utf-8');
         response.writeHead(safe.status, { Connection: 'close' });
         response.end(JSON.stringify({ error: { code: safe.code, message: safe.message } }));
         request.resume();

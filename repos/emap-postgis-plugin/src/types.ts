@@ -1,4 +1,4 @@
-import type { WkbQueryRequest, WkbQueryResult, DatasetQueryResult, ConversionOptions } from './wkb-types.js';
+import type { WkbQueryRequest, WkbQueryResult, DatasetQueryResult, ConversionOptions, WkbStreamRequest, StreamRequestOptions } from './wkb-types.js';
 export type * from './wkb-types.js';
 export interface ConnectionInfo { id: string; label: string; }
 export interface SpatialTable {
@@ -25,6 +25,8 @@ export interface PostgisContract {
   query(request: QueryRequest, options?: RequestOptions): Promise<QueryResult>;
   queryWkb(request: WkbQueryRequest, options?: RequestOptions): Promise<WkbQueryResult>;
   queryDataset(request: WkbQueryRequest, options?: RequestOptions): Promise<DatasetQueryResult>;
+  /** Stream all rows (or maxRows) without the single-page 10,000-row limit. */
+  queryDatasetStream(request: WkbStreamRequest, options?: StreamRequestOptions): Promise<DatasetQueryResult>;
   dispose(): void;
 }
 export interface PostgisOptions {
@@ -34,5 +36,7 @@ export interface PostgisOptions {
   token?: string | (() => string | Promise<string>);
   fetch?: typeof globalThis.fetch;
   timeoutMs?: number; maxResponseBytes?: number;
+  /** Total streamed source-byte budget; independent of the number of rows. */
+  maxStreamBytes?: number;
   conversion?: ConversionOptions;
 }

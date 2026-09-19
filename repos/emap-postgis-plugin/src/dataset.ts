@@ -5,16 +5,20 @@ import type { DatasetOptions, DatasetQueryResult, WkbQueryResult } from './wkb-t
 import { PostgisError, integer } from './errors.js';
 import { inspectWkb, wkbBytes } from './wkb.js';
 export { inspectWkb, wkbBytes } from './wkb.js';
-/** Same PathImporter -> cleanup -> topology pipeline as emap GeoParquet. */
-export function wkbToDataset(result: WkbQueryResult, options: DatasetOptions = {}): DatasetQueryResult {
+/** Incremental importer; one topology build after the final verified stream frame. */
+export function createWkbDatasetBuilder(result: WkbQueryResult, options: DatasetOptions = {}) {
+  const srid = integer(result.srid, 0, 1, 998999, 'srid');
+  const maxVertices = integer(options.maxVertices, 1000000, 1, 100000000, 'maxVertices');
+  const maxBytes = integer(options.maxGeometryBytes, 10485760, 1, 1073741824, 'maxGeometryBytes');
+  const adapter = getDefaultMapshaperAdapter(); const importer = adapter.createPathImporter({});
+  let vertices = 0; let bytesUsed = 0;
+  let total = 0;
+  return {
+    append(result: WkbQueryResult): void {
   if (result.encoding !== 'hex' || !['wkb', 'ewkb'].includes(result.format) || !Array.isArray(result.rows) ||
       result.rows.length !== result.rowCount || result.rows.length > 100000)
     throw new PostgisError('INVALID_RESPONSE', 'Expected a bounded WKB query result');
-  const srid = integer(result.srid, 0, 1, 998999, 'srid');
-  const maxVertices = integer(options.maxVertices, 1000000, 1, 10000000, 'maxVertices');
-  const maxBytes = integer(options.maxGeometryBytes, 10485760, 1, 104857600, 'maxGeometryBytes');
-  const adapter = getDefaultMapshaperAdapter(); const importer = adapter.createPathImporter({});
-  let vertices = 0; let bytesUsed = 0;
+  if (result.srid !== srid) throw new PostgisError('SRID_MISMATCH', 'Stream metadata changed');
   for (const row of result.rows) {
     if (!row || !row.properties || typeof row.properties !== 'object' || Array.isArray(row.properties))
       throw new PostgisError('INVALID_RESPONSE', 'Each row needs an attribute object');
@@ -48,10 +52,21 @@ export function wkbToDataset(result: WkbQueryResult, options: DatasetOptions = {
       }
     }
   }
+      total += result.rowCount;
+      if (!Number.isSafeInteger(total)) throw new PostgisError('RESULT_TOO_LARGE', 'Row count exceeds supported precision');
+    },
+    finish(last: WkbQueryResult): DatasetQueryResult {
   const dataset = importer.done(); adapter.cleanPathsAfterImport(dataset, {});
   if (dataset.arcs && !options.noTopology) adapter.buildTopology(dataset);
   dataset.layers.forEach((layer, i) => { layer.name = `${options.layerName ?? 'postgis'}_${layer.geometry_type ?? 'table'}_${i}`; });
   dataset.info = { ...dataset.info, crs_string: `EPSG:${srid}`, input_formats: ['postgis-wkb'] };
-  const { rows: _rows, ...metadata } = result;
-  return { ...metadata, dataset };
+  const { rows: _rows, ...metadata } = last;
+  return { ...metadata, rowCount:total, offset:0, dataset };
+    },
+  };
+}
+/** Same PathImporter -> cleanup -> topology pipeline as emap GeoParquet. */
+export function wkbToDataset(result: WkbQueryResult, options: DatasetOptions = {}): DatasetQueryResult {
+  const builder = createWkbDatasetBuilder(result, options); builder.append(result);
+  return { ...builder.finish(result), offset:result.offset };
 }

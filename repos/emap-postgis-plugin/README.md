@@ -7,6 +7,14 @@ emap 原生 Cordis 插件：通过服务端连接 PostGIS，执行 SELECT，并�
 转换复用公开的 `@mapseekai/emap/arrow.decodeWkb`，沿用 GeoParquet 的 `PathImporter → cleanPathsAfterImport → buildTopology`。
 插件补充 EWKB SRID 校验、WKB 边界/顶点预算与 GeometryCollection 分组，几何坐标不序列化为 GeoJSON。
 
+## 网页一键唤起本地连接器
+
+新增独立 `./connector` 浏览器入口，可与 [emap Connector 桌面应用](../../apps/emap-connector/README.md)
+配合完成网页唤起、原生授权与短期会话。用户安装一次后，无需终端、Node.js 或手工 Token。
+参见 [本地连接器接入](docs/local-connector.md) 和 `examples/connector.html`。
+原有远程网关入口保持不变；以下 `.env` 启动方式仍供开发者/服务端部署使用。
+新增接口目前位于本仓库源码，尚未发布包含这些改动的新 npm 版本。
+
 ## 本地启动
 
 ```sh
@@ -76,6 +84,8 @@ Worker 默认最多并发 2 个，转换超时 30 秒、100 万顶点、10 MiB �
 
 ## 部署与安全
 
+本节描述原有远程网关；本地 Connector 另行提供按网页来源和单数据库连接授权，详见本地连接器文档。
+
 浏览器必须通过网关，不能使用数据库连接串。数据库账号只能在服务端配置；应用 Token 不等于数据库密码。
 只供受信任应用用户使用。AST 校验与 READ ONLY 事务不是任意 SQL 的完整沙箱，自定义函数仍可能有外部副作用。
 必须使用独立最小权限账号，仅授予必要 schema/table 的 USAGE/SELECT，审查并限制非必要函数执行权限。
@@ -94,3 +104,15 @@ npm run verify:all   # 再执行真实数据库与浏览器检查，需要 Docke
 可用 `POSTGIS_TEST_IMAGE` 指定兼容镜像，`CHROME_BIN` 指定浏览器。测试完成释放容器及监听端口。
 运行记录见 [docs/verification.md](docs/verification.md)，部署样例见 `examples/`。
 此版本的本地构建不代表已经 npm 发布或部署线上服务。
+
+## 全量读取与授权时长（0.3 开发版）
+
+使用 `client.queryDatasetStream({ connectionId, sql })` 读取全部结果；可传 `maxRows` 限定条数（不限于 10000），并用第二个参数的 `onProgress({ rowsRead })` 显示进度。
+数据由同一只读事务/游标分批传输，在 Worker 中增量构建一个 Dataset。完整结束标记缺失、取消、授权撤销或字节/内存预算超限都会报错，不将部分结果冒充完整表。
+`queryDataset` / `queryWkb` 仍保留原有单页限制。全量读取没有总行数上限，但最终浏览器 Dataset 和工程文件仍受内存/存储预算约束。
+
+`connector.connect({ sessionDurationMs })` 支持 1 分钟至 24 小时；默认 1 小时。Connector 0.2.0+ 在本机核对并执行该时长。旧连接器仅兼容默认 1 小时，非默认时长会提示更新。
+较长期限不会自动扩大已记住的较短授权，必须重新确认。窗口关闭/项目切换可提前结束会话。
+
+数据库连接现在允许普通或管理员账号；仍验证身份、表权限、TLS，并执行 SELECT-only AST 检查与只读事务。
+管理员账号只应供受信用户和站点使用：只读事务/AST 检查不是防御任意用户函数、外部副作用的完整 SQL 沙箱。

@@ -4,6 +4,14 @@ export interface WkbQueryRequest extends QueryRequest {
   geometryColumn?: string; idColumn?: string;
   sourceSrid?: number; targetSrid?: number; format?: 'ewkb' | 'wkb';
 }
+export interface WkbStreamRequest extends Omit<WkbQueryRequest, 'limit' | 'offset'> {
+  /** Omit to read the entire SELECT result using a single snapshot/cursor. */
+  maxRows?: number;
+  batchSize?: number;
+}
+export interface StreamRequestOptions extends RequestOptions {
+  onProgress?: (progress: { rowsRead: number }) => void;
+}
 /** Hex is only the HTTP envelope; coordinates never pass through GeoJSON. */
 export interface WkbRow {
   geometry: string | null; properties: Record<string, unknown>; id?: string;
@@ -26,5 +34,6 @@ export interface ConversionOptions extends DatasetOptions {
 }
 export interface DatasetConverter {
   convert(result: WkbQueryResult, options?: RequestOptions): Promise<DatasetQueryResult>;
+  convertPages(pages: AsyncIterable<WkbQueryResult>, options?: StreamRequestOptions): Promise<DatasetQueryResult>;
   dispose(): void;
 }

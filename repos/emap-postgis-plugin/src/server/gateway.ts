@@ -2,7 +2,7 @@ import { buildWkbQuery } from './wkb-query.js';
 import { Pool } from 'pg';
 import type { PoolClient, PoolConfig, FieldDef } from 'pg';
 import Cursor from 'pg-cursor';
-import type { ConnectionInfo, QueryRequest, WkbQueryRequest, QueryResult, WkbQueryResult, SpatialTable } from '../types.js';
+import type { ConnectionInfo, QueryRequest, WkbQueryRequest, QueryResult, WkbQueryResult, SpatialTable, WkbStreamRequest } from '../types.js';
 import { PostgisError, assertActive, integer } from '../errors.js';
 import { selectSql, identifier as qi } from './sql.js';
 export interface GatewayOptions {
@@ -29,7 +29,7 @@ export class PostgisGateway {
     if (!this.pools.size) throw new Error('At least one server-side connection is required');
   }
   connections(): ConnectionInfo[] { return this.catalog.map((item) => ({ ...item })); }
-  private async read<T>(id: string, signal: AbortSignal | undefined, operation: (client: PoolClient, signal: AbortSignal) => Promise<T>): Promise<T> {
+  private async read<T>(id: string, signal: AbortSignal | undefined, operation: (client: PoolClient, signal: AbortSignal) => Promise<T>, streaming = false): Promise<T> {
     if (this.disposed) throw new PostgisError('DISPOSED', 'Gateway is closed', 503);
     const pool = this.pools.get(id);
     if (!pool) throw new PostgisError('UNKNOWN_CONNECTION', 'Unknown connection', 404);
@@ -37,7 +37,7 @@ export class PostgisGateway {
     const task = new AbortController(); const cancel = () => task.abort(signal?.reason);
     this.active.add(task); signal?.addEventListener('abort', cancel, { once: true });
     if (signal?.aborted) cancel();
-    const timer = setTimeout(() => task.abort(new PostgisError('TIMEOUT', 'Query time limit exceeded', 408)), this.timeoutMs);
+    const timer = setTimeout(() => task.abort(new PostgisError('TIMEOUT', 'Query time limit exceeded', 408)), streaming ? 86_400_000 : this.timeoutMs);
     let client: PoolClient | undefined; let released = false;
     const release = () => { if (client && !released) { released = true; client.release(true); } };
     task.signal.addEventListener('abort', release, { once: true });
@@ -45,9 +45,9 @@ export class PostgisGateway {
       assertActive(task.signal); client = await pool.connect(); assertActive(task.signal);
       await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
       await client.query(`SET LOCAL statement_timeout = ${this.timeoutMs}; SET LOCAL lock_timeout = ${Math.min(2000, this.timeoutMs)}`);
-      const role = await client.query('SELECT rolsuper, rolcreatedb, rolcreaterole, rolreplication, rolbypassrls FROM pg_catalog.pg_roles WHERE rolname = current_user');
-      if (!role.rows[0] || Object.values(role.rows[0]).some(Boolean))
-        throw new PostgisError('UNSAFE_DB_ROLE', 'Configure a dedicated non-administrative SELECT-only database role', 403);
+      if (streaming) await client.query('SET LOCAL idle_in_transaction_session_timeout=60000');
+      // Account privileges are the user's choice. Our API still executes SELECT-only
+      // queries inside a read-only transaction; this is not a sandbox for hostile SQL.
       assertActive(task.signal); const result = await operation(client, task.signal); assertActive(task.signal);
       await client.query('ROLLBACK'); return result;
     } catch (error) {
@@ -129,6 +129,42 @@ export class PostgisGateway {
         limit: plan.limit, offset: plan.offset, geometryColumn: plan.geometryColumn,
         srid: plan.srid, format: plan.format, encoding: 'hex' };
     });
+  }
+  /** One cursor/transaction for an entire export; row limit applies only when requested. */
+  async streamWkb(request: WkbStreamRequest, emit: (frame: unknown) => Promise<void>, signal?: AbortSignal): Promise<void> {
+    const batchSize = integer(request.batchSize, 256, 1, 2000, 'batchSize');
+    const maxRows = request.maxRows === undefined ? undefined : integer(request.maxRows, 1, 1, Number.MAX_SAFE_INTEGER - 1, 'maxRows');
+    await this.read(request.connectionId, signal, async (client, active) => {
+      const prepared = await this.prepare(client, { ...request, limit: 1, offset: 0 });
+      const plan = buildWkbQuery(request, prepared, await this.spatialTypes(client), { maxRows });
+      const cursor = client.query(new Cursor(plan.statement, plan.bindings));
+      let total = 0; let page: { geometry: string | null; properties: Record<string,unknown>; id?: string }[] = [];
+      let bytes = 0; let more = false;
+      const flush = async () => {
+        if (!page.length) return;
+        assertActive(active);
+        await emit({ type:'batch', rows:page, rowCount:page.length, offset:total });
+        total += page.length; page = []; bytes = 0;
+      };
+      try {
+        await emit({ type:'meta', geometryColumn:plan.geometryColumn, srid:plan.srid, format:plan.format, encoding:'hex' });
+        exporting: for (;;) {
+          const batch = await cursor.read(64); assertActive(active);
+          for (const row of batch) {
+            if (maxRows !== undefined && total + page.length >= maxRows) { more = true; break exporting; }
+            const value = { geometry:row.geometry, properties:row.properties, ...(row.id === null ? {} : { id:row.id }) };
+            const size = Buffer.byteLength(JSON.stringify(value));
+            if (size > this.maxResponseBytes - 1024) throw new PostgisError('RESULT_TOO_LARGE', 'A row exceeds the stream byte budget', 413);
+            if (page.length && (page.length >= batchSize || bytes + size > Math.min(524288, this.maxResponseBytes-1024))) await flush();
+            page.push(value); bytes += size;
+          }
+          if (batch.length < 64) break;
+        }
+        await flush(); assertActive(active);
+      } finally { await cursor.close().catch(() => {}); }
+      // read() completes/rolls back before the caller sends the success terminator.
+      return { rowCount:total, hasMore:more, limit:maxRows ?? total };
+    }, true).then(async (result) => { signal?.throwIfAborted(); await emit({ type:'end', ...result }); });
   }
   async dispose(): Promise<void> {
     this.disposed = true;

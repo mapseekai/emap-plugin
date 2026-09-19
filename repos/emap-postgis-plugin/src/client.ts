@@ -1,3 +1,4 @@
+import { readWkbStream } from './stream.js';
 import { createDatasetConverter } from './converter.js';
 import type { WkbQueryResult } from './wkb-types.js';
 import { PostgisError, assertActive, integer } from './errors.js';
@@ -78,6 +79,14 @@ export function createPostgisClient(options: PostgisOptions): PostgisContract {
       const result = await request<WkbQueryResult>('/wkb', input, call);
       if (disposed) throw new PostgisError('DISPOSED', 'PostGIS client is disposed');
       return converter.convert(result, call);
+    },
+    async queryDatasetStream(input, call = {}) {
+      if (disposed) throw new PostgisError('DISPOSED', 'PostGIS client is disposed');
+      const task = new AbortController(); pending.add(task);
+      const signal = call.signal ? AbortSignal.any([task.signal,call.signal]) : task.signal;
+      try {
+        return await converter.convertPages(readWkbStream({ ...options, endpoint },input,{ signal }),{ ...call,signal });
+      } finally { task.abort(); pending.delete(task); }
     },
     dispose() {
       disposed = true; converter.dispose();

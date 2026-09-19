@@ -3,7 +3,7 @@ import type { WkbQueryRequest } from '../wkb-types.js';
 import { PostgisError, integer } from '../errors.js';
 import { identifier as qi } from './sql.js';
 interface Prepared { sql: string; values: unknown[]; fields: FieldDef[]; limit: number; offset: number; }
-export function buildWkbQuery(request: WkbQueryRequest, query: Prepared, spatial: { schema: string; oids: number[] }) {
+export function buildWkbQuery(request: WkbQueryRequest, query: Prepared, spatial: { schema: string; oids: number[] }, stream?: { maxRows?: number }) {
   const { sql, values, fields, limit, offset } = query; const ns = qi(spatial.schema);
   const spatialFields = fields.filter((field) => spatial.oids.includes(field.dataTypeID)).map((field) => field.name);
   const geometryColumn = request.geometryColumn ?? (spatialFields.length === 1 ? spatialFields[0] : undefined);
@@ -31,14 +31,21 @@ export function buildWkbQuery(request: WkbQueryRequest, query: Prepared, spatial
   const encoder = format === 'ewkb' ? 'ST_AsEWKB' : 'ST_AsBinary';
   const binary = `CASE WHEN ${geometry} IS NULL THEN NULL ELSE encode(${ns}.${encoder}(${normalized},'NDR'),'hex') END`;
   const excluded = [...new Set([...spatialFields, geometryColumn])];
-  const n = values.length; const bindings: unknown[] = [...values, excluded, limit + 1, offset];
-  let properties = `to_jsonb(q) - $${n + 1}::text[]`;
-  // JSON numbers would round PostgreSQL int8/numeric before reaching a DataTable.
-  for (const item of fields) if (!excluded.includes(item.name) && [20, 1700].includes(item.dataTypeID)) {
-    bindings.push(item.name);
-    properties += ` || jsonb_build_object($${bindings.length}::text,q.${qi(item.name)}::text)`;
-  }
+  const bindings: unknown[] = [...values];
+  const literal = (value: string) => "'" + value.replaceAll("'", "''") + "'";
+  // Exclude geometry BEFORE JSON conversion; this also supports curved geometry.
+  const attributes = fields.filter(item => !excluded.includes(item.name)).map(item =>
+    `${literal(item.name)},q.${qi(item.name)}${[20,1700].includes(item.dataTypeID) ? '::text' : ''}`);
+  const parts: string[] = [];
+  for (let i=0;i<attributes.length;i+=50) parts.push(`jsonb_build_object(${attributes.slice(i,i+50).join(',')})`);
+  const properties = parts.length ? parts.join(' || ') : "'{}'::jsonb";
   const id = request.idColumn === undefined ? 'NULL::text' : `q.${qi(request.idColumn)}::text`;
-  const statement = `SELECT ${binary} AS geometry, ${properties} AS properties, ${id} AS id FROM (${sql}\n) q LIMIT $${n + 2} OFFSET $${n + 3}`;
+  let suffix = '';
+  if (!stream) {
+    bindings.push(limit + 1, offset); suffix = ` LIMIT $${values.length+1} OFFSET $${values.length+2}`;
+  } else if (stream.maxRows !== undefined) {
+    bindings.push(stream.maxRows + 1); suffix = ` LIMIT $${bindings.length}`;
+  }
+  const statement = `SELECT ${binary} AS geometry, (${properties}) AS properties, ${id} AS id FROM (${sql}\n) q${suffix}`;
   return { statement, bindings, geometryColumn, srid: targetSrid, format, limit, offset };
 }

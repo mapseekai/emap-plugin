@@ -47,9 +47,9 @@ try {
     for (const sql of ['DELETE FROM shapes', 'WITH q AS (DELETE FROM shapes RETURNING *) SELECT * FROM q', 'SELECT geom,geom FROM shapes', 'SELECT geom AS a,geom AS b FROM shapes'])
       await assert.rejects(gateway.queryWkb(request(sql)));
   });
-  await check('rejects administrative database credentials', async () => {
+  await check('accepts administrative accounts while queries remain read-only', async () => {
     const unsafe = new PostgisGateway({ connections: { main: { config: database.adminConfig } } });
-    try { await assert.rejects(unsafe.testConnection('main'), (error) => error.code === 'UNSAFE_DB_ROLE'); }
+    try { assert.equal((await unsafe.testConnection('main')).ok, true); await assert.rejects(unsafe.query({connectionId:'main',sql:'DELETE FROM shapes'}),e=>e.code==='SELECT_ONLY'); }
     finally { await unsafe.dispose(); }
   });
   await mkdir('test-results/integration', { recursive: true });

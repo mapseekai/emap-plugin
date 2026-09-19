@@ -11,6 +11,9 @@
     "build": "node scripts/repos.mjs build",
     "test": "node --test test/*.test.mjs && node scripts/repos.mjs test",
     "verify": "node --test test/*.test.mjs && node scripts/repos.mjs verify",
-    "new:plugin": "node scripts/new-plugin.mjs"
+    "new:plugin": "node scripts/new-plugin.mjs",
+    "connector:verify": "npm --prefix apps/emap-connector run verify",
+    "connector:dev": "npm --prefix apps/emap-connector run dev",
+    "connector:build": "npm --prefix apps/emap-connector run build:native"
   }
 }
