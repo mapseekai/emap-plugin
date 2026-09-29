@@ -89,4 +89,4 @@ async function dispose() {
 CSP 要允许 `connect-src http://127.0.0.1:18787`；不要建议用户关闭浏览器安全检查。
 
 本地连接器不会修改 emap 的 Dataset、WKB/EWKB 或 Cordis 契约，数据库权限和 SQL 安全仍遵循原网关文档。
-更多平台/打包说明见 [连接器 README](../../../apps/emap-connector/README.md)。
+更多平台/打包说明见 [连接器 README](../../../apps/postgis-connector/README.md)。

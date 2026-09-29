@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+<title>postgis-connector</title>
+<desc>A blue database connected to a teal geographic pin.</desc>
+<g id="database" stroke="#2563eb" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+<path d="M144 76c0 13-24 24-54 24S36 89 36 76s24-24 54-24 54 11 54 24Z"/>
+<path d="M36 76v104c0 13 24 24 54 24 15 0 29-3 39-7M36 128c0 13 24 24 54 24 10 0 20-1 28-4"/>
+</g>
+<path id="pin" fill="#0d9488" fill-rule="evenodd" d="M176 64c-29 0-52 23-52 52 0 38 52 88 52 88s52-50 52-88c0-29-23-52-52-52Zm0 30a22 22 0 1 0 0 44 22 22 0 0 0 0-44Z"/>
+</svg>

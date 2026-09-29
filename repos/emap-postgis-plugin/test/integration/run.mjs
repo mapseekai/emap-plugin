@@ -3,6 +3,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { PostgisGateway } from '../../dist/server/index.js';
 import { wkbToDataset } from '../../dist/dataset.js';
 import { testDatabase } from './database.mjs';
+import { Pool } from 'pg';
+import { setTimeout as delay } from 'node:timers/promises';
 const database = await testDatabase(); const checks = [];
 const gateway = new PostgisGateway({ connections: { main: { config: database.config } }, onError: (error) => console.error(error.message) });
 const request = (sql, extra = {}) => ({ connectionId: 'main', sql, ...extra });
@@ -52,6 +54,59 @@ try {
     try { assert.equal((await unsafe.testConnection('main')).ok, true); await assert.rejects(unsafe.query({connectionId:'main',sql:'DELETE FROM shapes'}),e=>e.code==='SELECT_ONLY'); }
     finally { await unsafe.dispose(); }
   });
+  const admin = new Pool(database.adminConfig);
+  try {
+    await admin.query(`CREATE FUNCTION cancellation_fixture() RETURNS int LANGUAGE plpgsql AS $$
+      BEGIN PERFORM pg_sleep(2); RETURN 1; END $$`);
+    for (const method of ['query', 'queryWkb', 'streamWkb']) {
+      for (const reason of ['abort', 'timeout', 'dispose']) {
+        await check(`${method}: ${reason} settles a real cursor and releases admission`, async () => {
+          const current = new PostgisGateway({ connections: { main: { config: database.config } },
+            maxConcurrent: 1, timeoutMs: reason === 'timeout' ? 500 : 4000 });
+          const abort = new AbortController();
+          try {
+            const input = request(method === 'query' ? 'SELECT cancellation_fixture()'
+              : 'SELECT ST_SetSRID(ST_Point(cancellation_fixture(), 2), 4326) AS geom');
+            const frames = [];
+            const pending = (method === 'streamWkb'
+              ? current.streamWkb(input, async frame => { frames.push(frame); }, abort.signal)
+              : current[method](input, abort.signal)).then(() => ({ unexpectedSuccess: true }), error => error);
+            let executing = false;
+            for (let i = 0; i < 50; i++) {
+              const active = await admin.query(`SELECT 1 FROM pg_stat_activity WHERE application_name='emap-postgis'
+                AND state='active' AND query LIKE '%cancellation_fixture()%'
+                AND query NOT LIKE '%LIMIT 0%'`);
+              if (active.rowCount) { executing = true; break; }
+              await delay(5);
+            }
+            assert(executing, 'Cancellation must occur during real database execution');
+            if (reason === 'abort') abort.abort();
+            if (reason === 'dispose') await current.dispose();
+            const error = await Promise.race([pending, delay(1500, { code: 'TEST_HUNG' })]);
+            if (reason === 'abort') assert.equal(error.name, 'AbortError');
+            else if (reason === 'dispose') assert.equal(error.code, 'DISPOSED');
+            else assert(['TIMEOUT', 'QUERY_FAILED'].includes(error.code), `Expected client/server timeout, got ${error.code}`);
+            assert(!frames.some(frame => frame.type === 'end'), 'A cancelled stream must not emit success');
+            if (reason !== 'dispose') assert.equal((await current.testConnection('main')).ok, true);
+            // A disconnected backend may finish only at statement_timeout. Wait before
+            // the next case so it cannot be mistaken for that case's active query.
+            for (let i = 0; i < 100; i++) {
+              const active = await admin.query(`SELECT 1 FROM pg_stat_activity WHERE application_name='emap-postgis' AND state='active'`);
+              if (!active.rowCount) break;
+              assert(i < 99, 'Backend exceeded its statement timeout');
+              await delay(50);
+            }
+          } finally { await current.dispose(); }
+        });
+      }
+    }
+    await check('bounded streaming releases a suspended cursor before the next request', async () => {
+      const frames = [];
+      await gateway.streamWkb(request('SELECT ST_SetSRID(ST_Point(i, 2), 4326) geom FROM generate_series(1,200) i', { maxRows: 63 }), async frame => { frames.push(frame); });
+      assert.deepEqual(frames.at(-1), { type: 'end', rowCount: 63, hasMore: true, limit: 63 });
+      assert.equal((await gateway.testConnection('main')).ok, true);
+    });
+  } finally { await admin.end(); }
   await mkdir('test-results/integration', { recursive: true });
   const report = { postgisVersion: version.postgisVersion, count: checks.length, checks };
   await writeFile('test-results/integration/report.json', JSON.stringify(report, null, 2)); console.log(JSON.stringify(report, null, 2));

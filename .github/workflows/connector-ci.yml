@@ -1,15 +1,15 @@
-name: emap Connector native CI
+name: postgis-connector native CI
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - 'apps/emap-connector/**'
+      - 'apps/postgis-connector/**'
       - 'repos/emap-postgis-plugin/**'
       - '.github/workflows/connector-ci.yml'
   pull_request:
     paths:
-      - 'apps/emap-connector/**'
+      - 'apps/postgis-connector/**'
       - 'repos/emap-postgis-plugin/**'
       - '.github/workflows/connector-ci.yml'
 
@@ -57,7 +57,7 @@ jobs:
           cache: npm
           cache-dependency-path: |
             repos/emap-postgis-plugin/package-lock.json
-            apps/emap-connector/package-lock.json
+            apps/postgis-connector/package-lock.json
       - uses: dtolnay/rust-toolchain@1.92.0
       - name: Linux native libraries
         if: runner.os == 'Linux'
@@ -75,28 +75,28 @@ jobs:
         working-directory: repos/emap-postgis-plugin
         run: npm ci && npm run verify
       - name: Verify connector native service and isolated runtime
-        working-directory: apps/emap-connector
+        working-directory: apps/postgis-connector
         run: npm ci && npm run verify && npm run prepare:native
       - name: Native Rust tests
-        working-directory: apps/emap-connector
+        working-directory: apps/postgis-connector
         run: cargo test --manifest-path src-tauri/Cargo.toml --locked
       - name: Build native installer (unsigned CI artifact; no publishing)
-        working-directory: apps/emap-connector
+        working-directory: apps/postgis-connector
         env:
           CI: 'true'
         run: npm run build:native -- --ci --bundles '${{ matrix.bundles }}'
       - name: Enforce installer size below 10 MB
-        working-directory: apps/emap-connector
+        working-directory: apps/postgis-connector
         run: npm run package:size
       - uses: actions/upload-artifact@v4
         with:
-          name: emap-connector-${{ matrix.name }}-unsigned
+          name: postgis-connector-${{ matrix.name }}-unsigned
           if-no-files-found: error
           retention-days: 14
           path: |
-            apps/emap-connector/src-tauri/target/release/bundle/nsis/*.exe
-            apps/emap-connector/src-tauri/target/release/bundle/dmg/*.dmg
-            apps/emap-connector/src-tauri/target/release/bundle/deb/*.deb
+            apps/postgis-connector/src-tauri/target/release/bundle/nsis/*.exe
+            apps/postgis-connector/src-tauri/target/release/bundle/dmg/*.dmg
+            apps/postgis-connector/src-tauri/target/release/bundle/deb/*.deb
 
   browser-and-database:
     runs-on: ubuntu-22.04
@@ -111,11 +111,11 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libclang-dev clang pkg-config libssl-dev
       - working-directory: repos/emap-postgis-plugin
         run: npm ci && npm run build && npx playwright install --with-deps chromium
-      - working-directory: apps/emap-connector
+      - working-directory: apps/postgis-connector
         run: npm ci && npm run verify && npm run test:integration && npm run test:options && npm run test:parity && npm run test:browser && npm run test:ui
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: connector-browser-database-results
-          path: apps/emap-connector/test-results/
+          path: apps/postgis-connector/test-results/
           retention-days: 14

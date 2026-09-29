@@ -23,7 +23,7 @@ export async function* readWkbStream(options: PostgisOptions, input: WkbStreamRe
   };
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
   try {
-    const token = typeof options.token === 'function' ? await options.token() : options.token;
+    const token = await timed(async () => typeof options.token === 'function' ? options.token() : options.token);
     assertActive(task.signal);
     const response = await timed(()=>(options.fetch ?? globalThis.fetch.bind(globalThis))(
       options.endpoint.replace(/\/$/,'')+'/wkb/stream',{

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "postgis-connector",
+  "version": "0.2.0",
+  "identifier": "com.mapseekai.emap-connector",
+  "build": {
+    "beforeDevCommand": "npm run build && npm run prepare:native && npx vite --host 127.0.0.1",
+    "beforeBuildCommand": "npm run build && npm run prepare:native",
+    "devUrl": "http://127.0.0.1:1420",
+    "frontendDist": "../dist/ui"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "postgis-connector \u00b7 \u672c\u5730\u6570\u636e\u5e93\u8fde\u63a5\u5668",
+        "width": 820,
+        "height": 820,
+        "minWidth": 620,
+        "minHeight": 580,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src ipc: http://ipc.localhost; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "DeveloperTool",
+    "shortDescription": "User-authorized local PostGIS connections for emap",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": [
+      "binaries/postgis-connector-service"
+    ],
+    "resources": {
+      "runtime/": "runtime/"
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": true,
+        "languages": [
+          "SimpChinese",
+          "English"
+        ]
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "12.0"
+    },
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libayatana-appindicator3-1"
+        ]
+      }
+    }
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "emap-connect"
+        ]
+      }
+    }
+  }
+}

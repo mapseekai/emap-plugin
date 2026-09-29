@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="color-scheme" content="light"><title>postgis-connector</title><link rel="icon" type="image/svg+xml" href="/assets/postgis-mark.svg"></head>
+<body><main>
+<header class="app-header">
+<div class="brand"><img class="brand-logo" src="/assets/postgis-mark.svg" width="40" height="40" alt=""><div><h1>postgis<span>-connector</span></h1><p class="brand-caption">本地数据库连接器</p></div></div>
+<div id="status" role="status" data-state="starting">正在启动…</div>
+<p class="header-note">密码留在本机，网页仅访问你授权的数据库。</p>
+</header>
+<div id="message" role="alert" hidden></div>
+<section id="approvalSection" aria-labelledby="approvalTitle" hidden><h2 id="approvalTitle">待授权请求</h2><p>请核对完整站点地址及网页显示的配对编号。授权后，该网页能读取查询结果。</p><div id="approvals"></div></section>
+<section aria-labelledby="connectionsTitle"><div class="heading"><h2 id="connectionsTitle">数据库连接</h2><button id="newConnection" class="primary" type="button" aria-controls="formSection" aria-expanded="false">＋ 添加连接</button></div><div id="connections"></div></section>
+<section id="formSection" aria-labelledby="formTitle" hidden><h2 id="formTitle">添加数据库</h2><form id="connectionForm" autocomplete="off">
+<input id="profileId" type="hidden">
+<div class="grid"><label>连接名称<input id="label" maxlength="100" required placeholder="公司道路数据库"></label><label>数据库名称<input id="database" maxlength="100" required placeholder="gis"></label>
+<label>主机地址<input id="host" maxlength="253" required placeholder="db.example.com"></label><label>端口<input id="port" type="number" min="1" max="65535" value="5432" required></label>
+<label>用户名<input id="user" maxlength="100" required placeholder="emap_reader"></label><label>密码<input id="password" type="password" maxlength="1024" required autocomplete="new-password"></label></div>
+<label>传输安全<select id="tls"><option value="verify">验证服务器证书的 TLS（推荐）</option><option value="local">本机 / 本地隧道：不使用 TLS（仅 127.0.0.1 或 ::1）</option></select></label>
+<details><summary>自签名或组织 CA 证书（可选）</summary><label>PEM 内容<textarea id="ca" rows="4" maxlength="65536" placeholder="-----BEGIN CERTIFICATE-----"></textarea></label></details>
+<label class="check"><input id="rememberPassword" type="checkbox" checked>将密码保存在操作系统凭据存储中</label>
+<p class="muted">取消勾选后，密码仅保留在当前进程。支持普通及管理员账号；请仅授权可信站点。</p>
+<div class="actions"><button type="submit" class="primary">保存连接</button><button id="cancelForm" type="button">取消</button></div></form></section>
+<section aria-labelledby="grantsTitle"><h2 id="grantsTitle">站点授权</h2><div id="grants"></div></section>
+<section aria-labelledby="sessionsTitle"><h2 id="sessionsTitle">当前会话</h2><div id="sessions"></div></section>
+<footer><p>关闭窗口后保留托盘；退出会取消查询。不设置开机启动。</p><button id="quit" type="button">退出连接器</button></footer>
+</main><script type="module" src="/src/ui/main.ts"></script></body></html>

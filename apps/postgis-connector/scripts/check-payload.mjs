@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { readdir, readFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+const files=await readdir(resolve(root,'dist/service'));
+const binary='postgis-connector-service'+(process.platform==='win32'?'.exe':'');
+assert.deepEqual(files.sort(),[binary,'THIRD-PARTY-NOTICES.txt','runtime-dependencies.json'].sort(), 'Only the native executable and required notices may be packaged');
+const config=JSON.parse(await readFile(resolve(root,'src-tauri/tauri.conf.json'),'utf8'));
+assert.deepEqual(config.bundle.externalBin,['binaries/postgis-connector-service']);
+assert(!JSON.stringify(config).includes('emap-connector-node'));
+console.log('Production payload verified: native service plus notices; no Node, npm modules, WASM, type declarations or source maps.');

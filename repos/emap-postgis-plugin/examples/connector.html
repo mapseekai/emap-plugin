@@ -1,5 +1,5 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>emap · 本地 PostGIS 连接器</title>
 <style>body{margin:0;font:14px/1.5 system-ui;color:#203a36}header{padding:16px 20px;background:#f1f6f3;border-bottom:1px solid #dbe5df;display:flex;gap:12px;align-items:center;flex-wrap:wrap}button{padding:8px 14px;cursor:pointer}#status{flex:1;min-width:260px}#map{height:calc(100vh - 124px)}details{padding:10px 20px;font-size:12px;background:#fafbf9}</style></head><body>
-<header><strong>PostGIS 本地连接</strong><button id="connect">打开连接器并连接</button><button id="cancel" disabled>取消</button><button id="disconnect" disabled>断开</button><span id="status" role="status">首次使用请先安装 emap Connector。</span></header>
+<header><strong>PostGIS 本地连接</strong><button id="connect">打开连接器并连接</button><button id="cancel" disabled>取消</button><button id="disconnect" disabled>断开</button><span id="status" role="status">首次使用请先安装 postgis-connector。</span></header>
 <details><summary>首次使用与授权</summary>安装连接器后点击“打开连接器并连接”，允许浏览器打开本地应用并访问本机服务。在本地窗口配置数据库、核对站点及配对编号并授权。本示例不收集数据库密码。没有安装时请使用仓库生成的对应系统安装包；尚未配置公共下载地址。</details>
 <div id="map"></div><script type="module" src="./connector-main.ts"></script></body></html>

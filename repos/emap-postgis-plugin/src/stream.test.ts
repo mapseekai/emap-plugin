@@ -56,4 +56,27 @@ describe('bounded WKB stream',()=>{
     const client=createPostgisClient({...options,fetch:(async()=>new Promise(()=>{})) as typeof fetch});
     const pending=client.queryDatasetStream(input);const rejected=expect(pending).rejects.toThrow();client.dispose();await rejected;
   });
+  it.each(['timeout', 'abort', 'dispose'] as const)('cancels token acquisition on %s and releases conversion capacity', async mode => {
+    let release!: (value: string) => void;
+    const token = new Promise<string>(resolve => { release = resolve; });
+    let tokenCalls = 0, fetchCalls = 0;
+    const response = transport([meta, batch, end]);
+    const client = createPostgisClient({ ...options, conversion: { worker: false, maxConcurrent: 1 },
+      timeoutMs: mode === 'timeout' ? 20 : 1000,
+      token: () => ++tokenCalls === 1 ? token : 'ready',
+      fetch: (...args) => { fetchCalls++; return response(...args); },
+    });
+    const abort = new AbortController();
+    const pending = client.queryDatasetStream(input, { signal: abort.signal });
+    const rejected = expect(pending).rejects.toMatchObject(mode === 'timeout' ? { code: 'TIMEOUT' } : { name: 'AbortError' });
+    if (mode === 'abort') abort.abort();
+    if (mode === 'dispose') client.dispose();
+    try {
+      await rejected;
+      expect(fetchCalls).toBe(0);
+      if (mode !== 'dispose') expect((await client.queryDatasetStream(input)).rowCount).toBe(1);
+      release('late'); await Promise.resolve();
+      expect(fetchCalls).toBe(mode === 'dispose' ? 0 : 1);
+    } finally { client.dispose(); release('cleanup'); }
+  }, 2000);
 });

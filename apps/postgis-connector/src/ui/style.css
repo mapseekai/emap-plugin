@@ -1,0 +1,89 @@
+/* Same semantic fallbacks as emap's Mapseek theme; no runtime host dependency.
+   Keep native/system fonts: this app must not bundle a webfont or UI framework. */
+:root {
+  color-scheme: light;
+  --ec-bg: var(--background, oklch(0.9900 0.0020 149));
+  --ec-fg: var(--foreground, oklch(0.2500 0.0100 149));
+  --ec-card: var(--card, #fff);
+  --ec-primary: var(--primary, oklch(0.6270 0.1940 149));
+  --ec-primary-text: oklch(0.4300 0.1300 149);
+  --ec-muted: var(--muted, oklch(0.9700 0.0020 149));
+  --ec-muted-fg: var(--muted-foreground, oklch(0.5000 0.0200 149));
+  --ec-border: var(--border, oklch(0.9200 0.0050 149));
+  --ec-input: var(--input, oklch(0.8500 0.0080 149));
+  --ec-selection: var(--selection-bg, oklch(0.9500 0.0300 149));
+  --ec-danger: var(--destructive, oklch(0.6000 0.1800 25));
+  --ec-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", sans-serif;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; color: var(--ec-fg); background: var(--ec-bg); }
+main { width: 100%; max-width: 840px; margin: 0 auto; padding: 24px 28px 16px; }
+.app-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 0 0 20px; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-logo { display: block; flex: 0 0 40px; width: 40px; height: 40px; object-fit: contain; }
+h1 { margin: 0; font: 600 18px/1.35 var(--ec-mono); letter-spacing: -.6px; }
+h1 span { font-weight: 450; }
+.brand-caption { margin: 2px 0 0; color: var(--ec-muted-fg); font-size: 11px; }
+.header-note { flex-basis: 100%; color: var(--ec-muted-fg); margin: 0; font-size: 12px; }
+h2 { margin: 0 0 12px; font-size: 13px; line-height: 20px; font-weight: 650; }
+section { margin: 0 0 12px; padding: 16px; background: var(--ec-card); border: 1px solid var(--ec-border); }
+.heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.heading h2 { margin: 0; }
+section > p { margin: 0 0 12px; color: var(--ec-muted-fg); font-size: 12px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 16px; }
+label { display: block; min-width: 0; margin: 10px 0; font-size: 12px; font-weight: 500; }
+input, select, textarea {
+  display: block; width: 100%; min-width: 0; min-height: 32px; padding: 6px 8px; margin-top: 5px;
+  border: 1px solid var(--ec-input); border-radius: 0; color: var(--ec-fg); background: var(--ec-card); font: inherit; font-size: 13px;
+}
+input::placeholder, textarea::placeholder { color: var(--ec-muted-fg); opacity: .8; }
+#host, #port, #database, #user, #password, #ca { font-family: var(--ec-mono); }
+textarea { resize: vertical; }
+.check { display: flex; align-items: flex-start; gap: 8px; font-weight: 400; }
+.check input { flex: 0 0 14px; width: 14px; height: 14px; min-height: 0; margin: 2px 0 0; accent-color: var(--ec-primary-text); }
+button {
+  min-height: 32px; padding: 5px 10px; border: 1px solid var(--ec-border); border-radius: 0;
+  color: var(--ec-fg); background: var(--ec-card); font: inherit; font-size: 12px; cursor: pointer;
+}
+button:hover:not(:disabled) { background: var(--ec-muted); border-color: var(--ec-input); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+/* Tint-style primary, matching emap selection, keeps compact text legible. */
+.primary { color: var(--ec-primary-text); background: var(--ec-selection); border-color: var(--ec-primary); font-weight: 600; }
+.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--ec-selection), var(--ec-primary) 12%); border-color: var(--ec-primary); }
+.danger { color: var(--ec-danger); }
+.danger:hover:not(:disabled) { background: color-mix(in srgb, var(--ec-danger), white 95%); border-color: var(--ec-danger); }
+:where(button, input, select, textarea, summary):focus-visible { outline: 3px solid color-mix(in srgb, var(--ec-primary), transparent 70%); outline-offset: 2px; }
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.card { padding: 12px 0; border-bottom: 1px solid var(--ec-border); }
+.card:last-child { border-bottom: 0; padding-bottom: 0; }
+#connections .card:first-child { padding-top: 4px; }
+.name { font-size: 13px; font-weight: 650; overflow-wrap: anywhere; }
+.connection-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+.connection-state { padding: 1px 5px; background: var(--ec-muted); color: var(--ec-muted-fg); font-size: 11px; }
+.connection-state[data-available="true"] { color: var(--ec-primary-text); background: var(--ec-selection); }
+.muted { margin: 6px 0 0; color: var(--ec-muted-fg); font-size: 12px; overflow-wrap: anywhere; }
+.connection-meta { font-family: var(--ec-mono); font-size: 11px; line-height: 1.7; }
+.origin { padding: 6px 8px; border-left: 2px solid var(--ec-border); background: var(--ec-muted); font: 500 12px/1.6 var(--ec-mono); overflow-wrap: anywhere; unicode-bidi: plaintext; direction: ltr; }
+#approvalSection { border-left: 3px solid var(--ec-primary); }
+#approvalSection .origin { border-left-color: var(--ec-primary); }
+#status { color: var(--ec-muted-fg); background: var(--ec-muted); padding: 4px 7px; border: 1px solid var(--ec-border); font-size: 11px; }
+#status[data-state="ready"] { color: var(--ec-primary-text); background: var(--ec-selection); border-color: var(--ec-selection); }
+#status[data-state="error"] { color: var(--ec-danger); border-color: var(--ec-danger); }
+#message { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--ec-danger); color: var(--ec-danger); background: var(--ec-card); font-size: 12px; overflow-wrap: anywhere; }
+#message[data-kind="success"] { border-color: var(--ec-primary); color: var(--ec-primary-text); background: var(--ec-selection); }
+details { margin: 12px 0; }
+summary { cursor: pointer; color: var(--ec-muted-fg); font-size: 12px; }
+footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 4px 0; color: var(--ec-muted-fg); font-size: 11px; }
+footer p { margin: 0; }
+footer button { flex-shrink: 0; color: var(--ec-muted-fg); }
+@media (max-width: 640px) {
+  main { padding: 18px 16px 12px; }
+  section { padding: 14px; }
+  .app-header { gap: 10px; }
+  #status { margin-left: 56px; }
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  footer { flex-wrap: wrap; gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }

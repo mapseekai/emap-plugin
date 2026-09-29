@@ -54,10 +54,10 @@ PostGIS 查询服务和地图接入见 [PostGIS 插件 README](repos/emap-postgi
 
 ## 本地数据库连接器
 
-`apps/emap-connector/` 是独立的 Tauri 桌面应用，不通过 npm 发布，复用 PostGIS 插件的公开网关。
+`apps/postgis-connector/` 是独立的 Tauri 桌面应用，不通过 npm 发布，复用 PostGIS 插件的公开网关。
 支持网页自定义协议唤起、本地授权、系统凭据存储及按站点/连接限制的短期会话。
 Windows x64、macOS ARM64/Intel、Linux x64 的原生构建配置和验证边界见
-[连接器 README](apps/emap-connector/README.md)。
+[连接器 README](apps/postgis-connector/README.md)。
 
 ```sh
 npm run connector:verify        # 需先安装/构建 PostGIS 插件及连接器依赖

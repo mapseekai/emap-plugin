@@ -110,7 +110,7 @@ export function createConnector(options: ConnectorOptions = {}): ConnectorHandle
           try {
             const health = await request('/connector/health', undefined, AbortSignal.any([signal, AbortSignal.timeout(3000)]));
             if (health.app !== 'emap-connector' || health.protocolVersion !== 1)
-              throw new PostgisError('PROTOCOL_MISMATCH', '本地端口不是兼容的 emap Connector，请检查冲突或更新连接器。');
+              throw new PostgisError('PROTOCOL_MISMATCH', '本地端口不是兼容的 postgis-connector，请检查冲突或更新连接器。');
             supportsDuration = !!(health.capabilities as { sessionDuration?: unknown } | undefined)?.sessionDuration;
             if (!supportsDuration && duration !== 3_600_000)
               throw new PostgisError('CONNECTOR_UPDATE_REQUIRED', '当前连接器只支持 1 小时授权，请更新连接器后设置其他时长。');

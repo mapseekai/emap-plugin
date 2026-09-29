@@ -9,7 +9,7 @@ emap 原生 Cordis 插件：通过服务端连接 PostGIS，执行 SELECT，并�
 
 ## 网页一键唤起本地连接器
 
-新增独立 `./connector` 浏览器入口，可与 [emap Connector 桌面应用](../../apps/emap-connector/README.md)
+新增独立 `./connector` 浏览器入口，可与 [postgis-connector 桌面应用](../../apps/postgis-connector/README.md)
 配合完成网页唤起、原生授权与短期会话。用户安装一次后，无需终端、Node.js 或手工 Token。
 参见 [本地连接器接入](docs/local-connector.md) 和 `examples/connector.html`。
 原有远程网关入口保持不变；以下 `.env` 启动方式仍供开发者/服务端部署使用。

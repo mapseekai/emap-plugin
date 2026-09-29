@@ -1,0 +1,45 @@
+{
+  "name": "@mapseekai/postgis-connector",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Local, user-authorized PostGIS connector for emap",
+  "license": "MPL-2.0",
+  "engines": {
+    "node": ">=22.18 <25"
+  },
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "node scripts/build-service.mjs && vite build",
+    "build:native": "tauri build",
+    "prepare:native": "node scripts/prepare-native.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "cargo test --manifest-path native-service/Cargo.toml --locked",
+    "test:runtime": "node test/runtime.mjs",
+    "test:integration": "node test/integration.mjs",
+    "verify": "npm run typecheck && npm run package:icons && npm test && npm run test:reference && npm run build && npm run package:payload && npm run test:runtime",
+    "check:rust": "cargo test --manifest-path src-tauri/Cargo.toml --locked",
+    "tauri": "tauri",
+    "test:browser": "node test/browser.mjs",
+    "package:size": "node scripts/check-installer-size.mjs",
+    "test:reference": "vitest run",
+    "test:parity": "node test/native-parity.mjs",
+    "package:payload": "node scripts/check-payload.mjs",
+    "icons:build": "node scripts/prepare-icons.mjs && tauri icon assets/icon.svg && tauri icon assets/tray-template.svg --png 32 --output src-tauri/icons/tray",
+    "test:ui": "node test/ui-preview.mjs",
+    "package:icons": "node scripts/check-icons.mjs",
+    "test:options": "node test/options-integration.mjs"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "2.11.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4",
+    "@types/node": "^22.0.0",
+    "esbuild": "0.25.12",
+    "typescript": "5.9.3",
+    "vite": "7.3.6",
+    "vitest": "4.1.9",
+    "@mapseekai/emap-postgis-plugin": "file:../../repos/emap-postgis-plugin"
+  }
+}

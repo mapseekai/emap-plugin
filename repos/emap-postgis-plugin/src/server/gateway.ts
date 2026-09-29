@@ -39,6 +39,8 @@ export class PostgisGateway {
     if (signal?.aborted) cancel();
     const timer = setTimeout(() => task.abort(new PostgisError('TIMEOUT', 'Query time limit exceeded', 408)), streaming ? 86_400_000 : this.timeoutMs);
     let client: PoolClient | undefined; let released = false;
+    // Every read owns a disposable connection. Closing it also releases its transaction
+    // and cursors; never await protocol cleanup after abort has destroyed the socket.
     const release = () => { if (client && !released) { released = true; client.release(true); } };
     task.signal.addEventListener('abort', release, { once: true });
     try {
@@ -49,7 +51,7 @@ export class PostgisGateway {
       // Account privileges are the user's choice. Our API still executes SELECT-only
       // queries inside a read-only transaction; this is not a sandbox for hostile SQL.
       assertActive(task.signal); const result = await operation(client, task.signal); assertActive(task.signal);
-      await client.query('ROLLBACK'); return result;
+      return result;
     } catch (error) {
       if (task.signal.aborted) throw task.signal.reason;
       if (error instanceof PostgisError) throw error;
@@ -96,18 +98,16 @@ export class PostgisGateway {
   private async collect(client: PoolClient, sql: string, values: unknown[], signal: AbortSignal): Promise<Record<string, any>[]> {
     assertActive(signal); const cursor = client.query(new Cursor(sql, values));
     const rows: Record<string, any>[] = []; let bytes = 0;
-    try {
-      while (true) {
-        const batch = await cursor.read(32); assertActive(signal);
-        if (!batch.length) break;
-        for (const row of batch) {
-          bytes += Buffer.byteLength(JSON.stringify(row));
-          if (bytes > this.maxResponseBytes) throw new PostgisError('RESULT_TOO_LARGE', 'Result exceeds byte budget; reduce limit or simplify geometry', 413);
-          rows.push(row);
-        }
+    while (true) {
+      const batch = await cursor.read(32); assertActive(signal);
+      if (!batch.length) break;
+      for (const row of batch) {
+        bytes += Buffer.byteLength(JSON.stringify(row));
+        if (bytes > this.maxResponseBytes) throw new PostgisError('RESULT_TOO_LARGE', 'Result exceeds byte budget; reduce limit or simplify geometry', 413);
+        rows.push(row);
       }
-      return rows;
-    } finally { await cursor.close().catch(() => {}); }
+    }
+    return rows;
   }
   async query(request: QueryRequest, signal?: AbortSignal): Promise<QueryResult> {
     return this.read(request.connectionId, signal, async (client, active) => {
@@ -146,23 +146,21 @@ export class PostgisGateway {
         await emit({ type:'batch', rows:page, rowCount:page.length, offset:total });
         total += page.length; page = []; bytes = 0;
       };
-      try {
-        await emit({ type:'meta', geometryColumn:plan.geometryColumn, srid:plan.srid, format:plan.format, encoding:'hex' });
-        exporting: for (;;) {
-          const batch = await cursor.read(64); assertActive(active);
-          for (const row of batch) {
-            if (maxRows !== undefined && total + page.length >= maxRows) { more = true; break exporting; }
-            const value = { geometry:row.geometry, properties:row.properties, ...(row.id === null ? {} : { id:row.id }) };
-            const size = Buffer.byteLength(JSON.stringify(value));
-            if (size > this.maxResponseBytes - 1024) throw new PostgisError('RESULT_TOO_LARGE', 'A row exceeds the stream byte budget', 413);
-            if (page.length && (page.length >= batchSize || bytes + size > Math.min(524288, this.maxResponseBytes-1024))) await flush();
-            page.push(value); bytes += size;
-          }
-          if (batch.length < 64) break;
+      await emit({ type:'meta', geometryColumn:plan.geometryColumn, srid:plan.srid, format:plan.format, encoding:'hex' });
+      exporting: for (;;) {
+        const batch = await cursor.read(64); assertActive(active);
+        for (const row of batch) {
+          if (maxRows !== undefined && total + page.length >= maxRows) { more = true; break exporting; }
+          const value = { geometry:row.geometry, properties:row.properties, ...(row.id === null ? {} : { id:row.id }) };
+          const size = Buffer.byteLength(JSON.stringify(value));
+          if (size > this.maxResponseBytes - 1024) throw new PostgisError('RESULT_TOO_LARGE', 'A row exceeds the stream byte budget', 413);
+          if (page.length && (page.length >= batchSize || bytes + size > Math.min(524288, this.maxResponseBytes-1024))) await flush();
+          page.push(value); bytes += size;
         }
-        await flush(); assertActive(active);
-      } finally { await cursor.close().catch(() => {}); }
-      // read() completes/rolls back before the caller sends the success terminator.
+        if (batch.length < 64) break;
+      }
+      await flush(); assertActive(active);
+      // read() releases the connection before the caller sends the success terminator.
       return { rowCount:total, hasMore:more, limit:maxRows ?? total };
     }, true).then(async (result) => { signal?.throwIfAborted(); await emit({ type:'end', ...result }); });
   }
