@@ -63,7 +63,9 @@ CORS 对合法 Origin 回显只用于配对连通性，**不等于数据库授�
 
 本地管理 IPC 使用固定命令和有界 NDJSON，不把数据库错误、密码或完整 SQL 写入网页错误。
 系统凭据存储失败不降级为文件明文，支持显式会话内密码；本地配置目录记录连接元数据而非密码。
-配置损坏时拒绝加载、不悄悄覆盖旧文件。修改连接撤销旧权限；仍须使用数据库最小权限角色，不能将 SQL 验证当作完整沙箱。
+配置损坏时拒绝加载、不悄悄覆盖旧文件。修改连接撤销旧权限。
+连接允许普通或管理员账号，不因管理员角色而拒绝连接；数据库身份、表权限、TLS、SELECT-only AST 与只读事务限制仍适用。
+仍建议使用数据库最小权限角色；管理员连接只应授权受信用户和站点，不能将 SQL 验证当作完整沙箱。
 
 ## 实现参考
 
@@ -77,3 +79,13 @@ CORS 对合法 Origin 回显只用于配对连通性，**不等于数据库授�
 HTTP、配对和 stdio 协议版本保持 1，数据库服务由 Rust 实现。每个查询独占连接，不跨用户复用会话。
 取消时发送 PostgreSQL CancelRequest 后关闭连接；取消报文受 1 秒超时约束，仍保留数据库侧 15 秒 statement_timeout 作为保护。网络中断时不能承诺取消报文一定送达。
 空间属性先排除几何字段再 JSON 编码，避免曲线几何被隐式转为 GeoJSON。
+
+### SQL 策略兼容范围
+
+原生 `pg_query` 当前基于 PostgreSQL 17；公开 Node 网关的 `pgsql-parser` 基于 PostgreSQL 18。
+两边单测读取同一份 [`sql-policy.json`](../../../repos/emap-postgis-plugin/test/fixtures/sql-policy.json)，
+`test/native-parity.mjs` 在隔离数据库上同时调用公开 Node 网关与原生 HTTP：
+拒绝样例对照双方错误码（`INVALID_SQL`、`SELECT_ONLY`、`UNSAFE_FUNCTION`），
+允许样例对照完整查询响应及预期属性行，包括 CTE/JOIN 参数与 quoted identifiers。
+不比较反解析 SQL 的文本格式，不声称 PostgreSQL 17/18 全语法兼容；版本特有语法需另行验证。
+这些测试不增加生产管理 HTTP 路由，也不会连接保存的用户数据库。

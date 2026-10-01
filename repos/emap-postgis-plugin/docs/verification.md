@@ -16,7 +16,9 @@
 | 真实 Chromium + emap 0.13.0 | 13 项累计检查通过，包括卸载/重启 |
 
 数据库测试使用独立临时 Docker 容器与临时只读账号，不读取业务数据库连接配置。
-验证 geometry、geography、bytea WKB/EWKB、hex 文本、参数化 SELECT、WITH、分页、CRS、Z/M 归二维、集合、空值和权限拒绝。
+验证 geometry、geography、bytea WKB/EWKB、hex 文本、参数化 SELECT、WITH、分页、CRS、Z/M 归二维、集合、空值和查询限制。
+当前账号契约允许普通或管理员账号；管理员连接也执行 SELECT-only AST 检查与只读事务，不再以角色管理权限作为拒绝条件。
+生产仍建议最小权限账号；这些限制不是任意用户函数或外部副作用的完整 SQL 沙箱。
 浏览器测试走真实数据库和 HTTP 网关，直接加载发布用 Worker；仅取消用例人为延迟 HTTP 执行，确保可重复触发卸载。
 几何恢复、CRS 转换、点线面图层、SQL 控件均使用真实 emap；未以模拟 Dataset 代替端到端加载。
 

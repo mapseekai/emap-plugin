@@ -116,6 +116,7 @@ Windows 继续使用系统 WebView2；未安装时安装器可能需要获取系
 
 ```sh
 npm run verify                 # 类型、Rust 服务测试、旧 JS 参考测试、构建、隔离 CLI 运行
+npm run verify:all             # 再运行数据库、options、JS/Rust 对照、浏览器/UI、Tauri 原生测试
 npm run test:integration        # 独立临时 PostGIS Docker
 npm run test:parity             # 与旧网关对照，HTTP 安全、主动查询取消等
 npm run test:browser            # Chrome + 真 CLI + 真数据库 + Worker + emap Canvas
@@ -124,8 +125,26 @@ npm run check:rust              # 原生协议与配置持久化测试
 ```
 
 测试只创建自身拥有的临时目录、进程和 Docker 数据库，结束后清理，不读取业务连接。
+`verify:all` 需要 Docker、Chromium、Rust/libclang 和目标平台的 Tauri 系统库，
+且必须先构建公开 PostGIS 包。它不安装应用、注册协议、签名或发布。
+CI 将昂贵测试拆成原生矩阵与浏览器/数据库作业，覆盖同一套检查；不在每个平台重复浏览器套件。
 浏览器自动化以私有测试 IPC 代替“操作系统分发 URI”和“用户点击原生授权按钮”；HTTP、配对校验、SQL、几何转换和地图绘制都是真实链路。
 它不声称覆盖签名安装、操作系统授权弹窗、Keychain 交互或所有浏览器的本地网络权限。
+
+### 生产分发验收
+
+CI 在安装产物旁生成带版本、源码 revision、字节数和 SHA-256 的验收报告，
+**所有检查默认 `pending`，未签名 CI 产物不会因此变成正式发布产物**。
+签名/公证完成后，对最终安装包重新生成报告；逐项附上验收人和证据，再执行：
+
+```sh
+npm run release:prepare -- macos-arm64 test-results/release-macos-arm64.json /path/to/final.dmg
+npm run release:check -- test-results/release-macos-arm64.json /path/to/final.dmg
+```
+
+证据校验要求当前版本、干净源码 revision、安装包哈希及平台必需验收均匹配。
+这是可追溯的人工验收门禁，不会替代 OS 签名验证、执行安装器或发布文件。
+每个对外支持的平台都必须通过；证据填写标准见 [上线验收清单](docs/release-checklist.md)。
 
 ## 目录
 

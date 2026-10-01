@@ -2,12 +2,13 @@ import assert from 'node:assert/strict';
 import { randomBytes, createHash } from 'node:crypto';
 import { request as httpRequest } from 'node:http';
 import { createRequire } from 'node:module';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { PostgisGateway } from '@mapseekai/emap-postgis-plugin/server';
 import { testDatabase } from '../../../repos/emap-postgis-plugin/test/integration/database.mjs';
 import { startRuntime } from './runtime-helper.mjs';
 const reqFromPlugin = createRequire(import.meta.resolve('@mapseekai/emap-postgis-plugin/server'));
 const { Pool } = reqFromPlugin('pg'); // Test fixture only, never part of the installation payload.
+const policy = JSON.parse(await readFile(new URL('../../../repos/emap-postgis-plugin/test/fixtures/sql-policy.json', import.meta.url), 'utf8'));
 const db = await testDatabase(); let runtime, reference, admin;
 const checks = []; const origin = 'https://emap.example';
 const secret = () => randomBytes(32).toString('base64url');
@@ -63,10 +64,27 @@ try {
     assert.equal(actual.status,200,JSON.stringify(actual.body));assert.deepEqual(actual.body,expected,fixture.sql);
   }
   checks.push('5 bound-parameter query cases match: Unicode/injection text, numeric precision, boolean, JSON, SQL arrays and NULL');
-  for(const sql of ['DELETE FROM shapes','SELECT 1; SELECT 2','WITH q AS (DELETE FROM shapes RETURNING *) SELECT * FROM q','SELECT * INTO copied FROM shapes','SELECT * FROM shapes FOR UPDATE',"SELECT set_config('transaction_read_only','off',true)","SELECT pg_sleep(1)","SELECT nextval('x')"]) {
-    const r=await call('/postgis/query',{connectionId:'main',sql},token);assert.equal(r.status,400,sql);
+  for(const fixture of policy.cases) {
+    const input={connectionId:'main',sql:fixture.sql,...(fixture.parameters ? {parameters:fixture.parameters} : {})};
+    // Exercise the public JS gateway as well as native HTTP, including both error codes.
+    // Do not compare deparser text: PG17/18 may format equivalent SQL differently.
+    const expected=await reference.query(input).then(
+      body=>({body:JSON.parse(JSON.stringify(body))}),
+      error=>({error:error.code}),
+    );
+    const actual=await call('/postgis/query',input,token);
+    if(fixture.error) {
+      assert.equal(expected.error,fixture.error,`JS: ${fixture.name}`);
+      assert.equal(actual.status,400,`native: ${fixture.name}`);
+      assert.equal(actual.body.error.code,expected.error,`error parity: ${fixture.name}`);
+    } else {
+      assert.equal(expected.error,undefined,`JS: ${fixture.name}`);
+      assert.deepEqual(expected.body.rows,fixture.rows,`fixture output: ${fixture.name}`);
+      assert.equal(actual.status,200,`${fixture.name}: ${JSON.stringify(actual.body)}`);
+      assert.deepEqual(actual.body,expected.body,`output parity: ${fixture.name}`);
+    }
   }
-  checks.push('8 unsafe SQL cases rejected by the native PostgreSQL AST policy');
+  checks.push(`${policy.cases.length} shared SQL policy cases compare JS/native error codes or complete output (PG17/18 common subset only)`);
   for(const bad of ['SELECT geom,geom FROM shapes','SELECT geom AS a,geom AS b FROM shapes',"SELECT ST_GeomFromText('POINT(1 2)') AS geom"]){assert.equal((await call('/postgis/wkb',{connectionId:'main',sql:bad},token)).status,400);}
   checks.push('Duplicate columns, ambiguous geometry and unknown SRID remain errors');
   for(const site of ['null','http://evil.example','https://emap.example/'])assert.equal((await call('/connector/health',undefined,undefined,site)).status,403);

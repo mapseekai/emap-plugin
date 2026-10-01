@@ -14,12 +14,38 @@ emap-plugin/
 两个插件都由本仓库 Git 跟踪，不使用子仓库、submodule 或嵌套 `.git`。新增插件也直接进入 `repos/` 并随根仓库提交。
 
 ```sh
+npm ci                          # 根管理工具依赖（必须先安装）
+npm run management:test         # 仅根命令/脚手架测试，不安装或构建业务插件
+npm run management:verify       # 根管理门禁（当前同 management:test）
 npm run bootstrap               # 各插件 npm ci；首次无锁文件时 npm install
 npm run build                   # 逐插件构建
-npm run test                    # 根脚手架测试 + 逐插件测试
-npm run verify                  # 根脚手架测试 + 逐插件 verify
+npm run test                    # 根管理测试 + 逐插件测试
+npm run verify                  # 根管理门禁 + 逐插件 verify（不包含 Connector）
+npm run verify:all              # 根管理门禁 + 逐插件完整门禁 + Connector 完整门禁
 npm run new:plugin -- terrain   # 在 repos/ 下创建一个新的独立 npm 包
 ```
+
+## 验证范围与前置环境
+
+使用 Node.js `>=22.18 <25` 和 npm；干净检出后先在根目录运行 `npm ci`。
+根锁文件只安装脚手架验证需要的 TypeScript 和固定版本 Cordis。
+脚手架测试在临时目录生成插件，使用根 `node_modules` 执行生成包的
+`verify`，不借用 GDAL 或任何业务插件的依赖，也不需要宿主源码。
+`management:verify` 覆盖根命令调度、路径边界和模板生成/类型检查/运行测试；
+不运行 `test/review`，也不代替插件或应用门禁。
+
+`verify` 保留登记插件各自 `verify` 的原有范围。
+`verify:all` 对登记插件优先执行 `verify:all`，没有该入口则执行 `verify`，
+然后执行 Connector 的 `verify:all`（包括集成、选项、原生一致性、浏览器、
+UI 与 Tauri Rust 检查）。先运行 `npm run bootstrap`，并在
+`apps/postgis-connector` 执行 `npm ci`；完整验证还需要 Rust/Cargo、
+平台 Tauri 构建依赖、浏览器及各目标 README 指定的数据库/原生环境。
+完整门禁不代表签名发布、安装器实机安装或全部操作系统验收已经完成。
+具体依赖、环境变量与剩余发布验收见各插件和连接器 README。
+
+Management CI 对根工具、清单、模板和规则变化运行 `npm ci` +
+`management:verify`。昂贵的插件浏览器/原生构建及应用完整门禁由各自 CI
+负责，不在管理 CI 重复执行。
 
 ## 独立发布
 

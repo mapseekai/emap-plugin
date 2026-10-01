@@ -24,7 +24,8 @@ test('creates monorepo plugin package and rejects unsafe or duplicate names', ()
     assert.match(readFileSync(resolve(temporary, 'repos/emap-terrain-plugin/src/index.ts'), 'utf8'), /terrainPlugin/);
     assert.notEqual(run('terrain').status, 0);
     const pluginRoot = resolve(temporary, 'repos/emap-terrain-plugin');
-    symlinkSync(resolve(root, 'repos/emap-gdal-plugin/node_modules'), resolve(pluginRoot, 'node_modules'), 'dir');
+    assert.ok(existsSync(resolve(root, 'node_modules/typescript/package.json')), 'Run npm ci at the management root before testing');
+    symlinkSync(resolve(root, 'node_modules'), resolve(pluginRoot, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
     const verified = spawnSync('npm', ['run', 'verify'], { cwd: pluginRoot, encoding: 'utf8' });
     assert.equal(verified.status, 0, verified.stdout + verified.stderr);
   } finally { rmSync(temporary, { recursive: true, force: true }); }

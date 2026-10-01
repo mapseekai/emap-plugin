@@ -81,39 +81,27 @@ pub fn select_sql(input: &str) -> Result<String> {
 mod tests {
     use super::*;
     #[test]
-    fn accepts_postgresql_selects() {
-        for s in [
-            "SELECT 1 AS id",
-            "/*comment*/SELECT $1::text AS name;",
-            "SELECT 'delete; drop table roads' AS label",
-            "WITH x AS (SELECT 1 id) SELECT * FROM x",
-            "SELECT a.id FROM roads a JOIN names b ON a.id=b.id WHERE b.name=$1",
-            "SELECT ST_Intersects(geom,ST_MakeEnvelope(1,2,3,4,4326)) FROM roads",
-            "SELECT 1 UNION ALL SELECT 2",
-        ] {
-            assert!(select_sql(s).is_ok(), "{s}: {:?}", select_sql(s));
+    fn shared_sql_policy() {
+        // Test-only repository fixture: no validation or management HTTP route.
+        let policy: Value = serde_json::from_str(include_str!(
+            "../../../../repos/emap-postgis-plugin/test/fixtures/sql-policy.json"
+        ))
+        .unwrap();
+        for case in policy["cases"].as_array().unwrap() {
+            let sql = case["sql"].as_str().unwrap();
+            let result = select_sql(sql);
+            if let Some(code) = case["error"].as_str() {
+                assert_eq!(result.unwrap_err().code, code, "{}", case["name"]);
+            } else {
+                let normalized = result.unwrap_or_else(|e| panic!("{}: {e:?}", case["name"]));
+                assert!(!normalized.ends_with(';'), "{}", case["name"]);
+            }
         }
     }
     #[test]
-    fn rejects_writes_and_side_effect_functions() {
-        for s in [
-            "SELECT 1; SELECT 2",
-            "DELETE FROM roads",
-            "DROP TABLE roads",
-            "COPY roads TO STDOUT",
-            "EXPLAIN SELECT 1",
-            "SELECT * INTO copy FROM roads",
-            "SELECT * FROM roads FOR UPDATE",
-            "WITH changed AS (DELETE FROM roads RETURNING *) SELECT * FROM changed",
-            "SELECT set_config('transaction_read_only','off',true)",
-            "SELECT pg_catalog.set_config('search_path','evil',false)",
-            "SELECT nextval('seq')",
-            "SELECT dblink('x','SELECT 1')",
-            "SELECT pg_sleep(1)",
-            "",
-        ] {
-            assert!(select_sql(s).is_err(), "{s}");
-        }
+    fn limits_utf8_bytes() {
+        let sql = format!("SELECT '{}'", "中".repeat(17000));
+        assert_eq!(select_sql(&sql).unwrap_err().code, "INVALID_SQL");
     }
     #[test]
     fn safe_identifier_and_literal() {

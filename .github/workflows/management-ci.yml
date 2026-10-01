@@ -1,0 +1,43 @@
+name: Management
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'repositories.json'
+      - 'repos/*/package.json'
+      - 'apps/postgis-connector/package.json'
+      - 'scripts/**'
+      - 'test/*.test.mjs'
+      - 'templates/**'
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agents/**'
+      - '.github/workflows/management-ci.yml'
+  push:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'repositories.json'
+      - 'repos/*/package.json'
+      - 'apps/postgis-connector/package.json'
+      - 'scripts/**'
+      - 'test/*.test.mjs'
+      - 'templates/**'
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agents/**'
+      - '.github/workflows/management-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  management:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.18.0
+          cache: npm
+      - run: npm ci
+      - run: npm run management:verify
