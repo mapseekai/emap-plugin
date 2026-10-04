@@ -22,7 +22,7 @@ export async function run(options: { endpoint: string; token: string }) {
   check(document.querySelector('section[aria-label="PostGIS 查询"]'), 'SQL control is mounted');
   check(map.getRenderedLayers().length >= 3, 'emap exposes rendered vector layers');
   check(diagnostics().coloredPixels > 100, 'canvas contains rendered geometry pixels');
-  return { count: checks.length, checks, backend: 'isolated PostGIS + HTTP + Dataset Worker + real emap; delayed transport for cancellation only', emap: '0.13.0' };
+  return { count: checks.length, checks, backend: 'isolated PostGIS + HTTP + Dataset Worker + real emap; delayed transport for cancellation only', emap: '0.14.1' };
 }
 export async function dispose() {
   try {
@@ -43,8 +43,12 @@ export function diagnostics() {
   const source = map.getSource('mixed') as import('@mapseekai/emap').TopologySource | undefined;
   let coloredPixels = 0;
   for (const canvas of document.querySelectorAll<HTMLCanvasElement>('#map canvas')) {
-    const context = canvas.getContext('2d');
-    if (!context || !canvas.width || !canvas.height) continue;
+    if (!canvas.width || !canvas.height) continue;
+    // EMAP 0.14 uses a GPU canvas; sample through a separate 2D canvas.
+    const snapshot = document.createElement('canvas');
+    snapshot.width = canvas.width; snapshot.height = canvas.height;
+    const context = snapshot.getContext('2d')!;
+    context.drawImage(canvas, 0, 0);
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
     for (let i = 0; i < pixels.length; i += 4)
       if (pixels[i + 3] && (pixels[i] < 250 || pixels[i + 1] < 250 || pixels[i + 2] < 250)) coloredPixels++;

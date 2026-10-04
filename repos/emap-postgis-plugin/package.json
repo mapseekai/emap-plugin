@@ -1,6 +1,6 @@
 {
   "name": "@mapseekai/emap-postgis-plugin",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "description": "Read-only PostGIS SQL gateway and native Cordis vector layers for emap",
   "license": "MPL-2.0",
@@ -72,11 +72,11 @@
     "pgsql-parser": "18.2.8"
   },
   "peerDependencies": {
-    "@mapseekai/emap": "^0.13.0",
+    "@mapseekai/emap": "^0.14.1",
     "cordis": "4.0.0-rc.10"
   },
   "devDependencies": {
-    "@mapseekai/emap": "0.13.0",
+    "@mapseekai/emap": "0.14.1",
     "@playwright/test": "1.62.1",
     "@types/node": "^22.0.0",
     "@types/pg-cursor": "^2.7.2",

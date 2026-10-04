@@ -21,7 +21,8 @@ export async function testDatabase() {
     const base = { host: '127.0.0.1', port, database: 'emap_test' };
     admin = new Pool({ ...base, user: 'postgres', password, max: 1, connectionTimeoutMillis: 1000 });
     let ready = false;
-    for (let i = 0; i < 60; i++) {
+    // A fresh container must finish initializing the PostGIS extensions before accepting TCP connections.
+    for (let i = 0; i < 240; i++) {
       try { await admin.query('SELECT 1'); ready = true; break; }
       catch { await new Promise((done) => setTimeout(done, 250)); }
     }

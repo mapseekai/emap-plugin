@@ -1,6 +1,6 @@
 {
   "name": "@mapseekai/emap-gdal-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Native Cordis GDAL provider for emap, with isolated browser Workers and external raster pyramids",
   "type": "module",
   "license": "MPL-2.0",
@@ -49,11 +49,11 @@
     "@mapseekai/gdal3.js": "2.8.2"
   },
   "peerDependencies": {
-    "@mapseekai/emap": "^0.13.0",
+    "@mapseekai/emap": "^0.14.1",
     "cordis": "4.0.0-rc.10"
   },
   "devDependencies": {
-    "@mapseekai/emap": "0.13.0",
+    "@mapseekai/emap": "0.14.1",
     "@playwright/test": "1.62.1",
     "@types/node": "^22.0.0",
     "cordis": "4.0.0-rc.10",

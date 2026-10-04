@@ -2,7 +2,7 @@
 
 Read only the section needed for the task; general ownership and repository rules
 remain in [SKILL.md](../SKILL.md). These examples target the project's installed
-emap `0.13.0` baseline, not an assertion about every future emap version.
+emap `0.14.1` baseline, not an assertion about every future emap version.
 
 ## Public imports and services
 

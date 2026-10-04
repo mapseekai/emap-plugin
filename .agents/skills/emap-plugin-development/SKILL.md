@@ -19,7 +19,7 @@ Only load [integration patterns](references/patterns.md) for the kind of plugin 
   The [template](../../../templates/plugin/README.md) includes standalone development rules.
 - `@mapseekai/emap` is a peer dependency. Use only its public package exports;
   inspect the installed version's declarations, not private source/deep imports.
-- The current baseline is emap `0.13.0` and `cordis@4.0.0-rc.10`. Keep Cordis pinned
+- The current baseline is emap `0.14.1` and `cordis@4.0.0-rc.10`. Keep Cordis pinned
   as a peer and external to ESM bundles; do not upgrade it as incidental cleanup.
 - Do not create nested Git repositories under `repos/`. Package build/runtime code must remain
   usable independently of root tooling, while development commits and pushes happen at the root.

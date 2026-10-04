@@ -1,5 +1,13 @@
 # 首版验证记录
 
+## EMAP 0.14.1 升级回归（2026-10-04）
+
+开发依赖更新为 `@mapseekai/emap@0.14.1`，peer 范围为 `^0.14.1`；Cordis 和 GDAL 版本保持不变。
+使用 Node 22.23.2，在根目录运行 `npm run verify` 通过：脚手架、类型检查、28 项单元测试、构建、包检查、28 项真实 GDAL/emap 浏览器断言及 Vite 演示页均通过。
+21 个 GDAL Worker 全部终止，浏览器报告确认 emap 为 `0.14.1`。未执行独立的已安装 npm 包浏览器测试，未发布 npm。
+
+## 首版历史记录
+
 日期：2026-09-18。环境：macOS arm64、Node 22.23.1、npm 10.9.8、本机 Google Chrome（Playwright 启动）。
 依赖：@mapseekai/gdal3.js 2.8.2、@mapseekai/emap 0.13.0、单实例去重的 cordis 4.0.0-rc.10。
 

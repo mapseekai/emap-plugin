@@ -24,7 +24,12 @@ export function install(baseUrl) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       let coloredPixels = 0;
       for (const canvas of document.querySelectorAll('#map canvas')) {
-        const ctx = canvas.getContext('2d'); if (!ctx || !canvas.width || !canvas.height) continue;
+        if (!canvas.width || !canvas.height) continue;
+        // EMAP 0.14 uses a GPU canvas; sample through a separate 2D canvas.
+        const snapshot = document.createElement('canvas');
+        snapshot.width = canvas.width; snapshot.height = canvas.height;
+        const ctx = snapshot.getContext('2d');
+        ctx.drawImage(canvas, 0, 0);
         const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
         for (let i = 0; i < pixels.length; i += 4) if (pixels[i + 3] && (pixels[i] < 250 || pixels[i + 1] < 250 || pixels[i + 2] < 250)) coloredPixels++;
       }
