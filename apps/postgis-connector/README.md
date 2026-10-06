@@ -160,6 +160,10 @@ test/             隔离 CLI、数据库和真实浏览器检查
 进一步说明：[协议与安全边界](docs/protocol.md) · [上线验收清单](docs/release-checklist.md) ·
 [网页插件接入](../../repos/emap-postgis-plugin/docs/local-connector.md)。
 
+## 0.2.1 更新
+
+开发与浏览器集成基线更新至 emap `0.14.2`、PostGIS 插件 `0.4.1`。应用、原生服务和安装包版本统一为 `0.2.1`。
+
 ## 0.2.0 本地更新
 
 普通及管理员账号均可连接，不再强制专用只读账号。查询仍采用只读事务；请仅授权可信站点。
