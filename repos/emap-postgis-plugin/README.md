@@ -13,7 +13,7 @@ emap 原生 Cordis 插件：通过服务端连接 PostGIS，执行 SELECT，并�
 配合完成网页唤起、原生授权与短期会话。用户安装一次后，无需终端、Node.js 或手工 Token。
 参见 [本地连接器接入](docs/local-connector.md) 和 `examples/connector.html`。
 原有远程网关入口保持不变；以下 `.env` 启动方式仍供开发者/服务端部署使用。
-这些接口包含在 `@mapseekai/emap-postgis-plugin@0.4.0` 中。
+这些接口包含在 `@mapseekai/emap-postgis-plugin@0.4.1` 中。
 
 ## 本地启动
 
@@ -38,7 +38,7 @@ npm run dev
 `npm run verify:all` 运行全部验证。测试不连接业务数据库，临时容器由测试负责清理。
 
 该插件与其他插件共用根 Git 仓库，但拥有独立 package-lock、npm 版本与发布生命周期。Cordis 固定为 `4.0.0-rc.10` peer，emap 为 `^0.14.2`。
-当前 npm 包版本为 `0.4.0`；不要把服务端 `./server` 入口导入浏览器代码。
+当前 npm 包版本为 `0.4.1`；不要把服务端 `./server` 入口导入浏览器代码。
 ## API 与 SQL
 
 `map.ctx.postgis` 提供 `connections()`、`testConnection()`、`tables()`、`query()`、`queryWkb()` 和 `queryDataset()`。

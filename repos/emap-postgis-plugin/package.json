@@ -1,6 +1,6 @@
 {
   "name": "@mapseekai/emap-postgis-plugin",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "type": "module",
   "description": "Read-only PostGIS SQL gateway and native Cordis vector layers for emap",
   "license": "MPL-2.0",

@@ -3,7 +3,7 @@
 ## 使用方
 
 ```sh
-npm install @mapseekai/emap-gdal-plugin@0.2.0
+npm install @mapseekai/emap-gdal-plugin@0.2.1
 npx emap-gdal-copy-assets public/emap-gdal
 ```
 
@@ -25,13 +25,13 @@ npm run verify
 npm pack --ignore-scripts
 ```
 
-先用 `node test/browser/installed.mjs ./mapseekai-emap-gdal-plugin-0.2.0.tgz`
+先用 `node test/browser/installed.mjs ./mapseekai-emap-gdal-plugin-0.2.1.tgz`
 在临时宿主中验证安装包，再发布同一个已验证的归档。
 
 ```sh
-npm publish ./mapseekai-emap-gdal-plugin-0.2.0.tgz --access public --tag latest --registry=https://registry.npmjs.org
-npm view @mapseekai/emap-gdal-plugin@0.2.0 version dist.integrity --json --registry=https://registry.npmjs.org
-node test/browser/installed.mjs @mapseekai/emap-gdal-plugin@0.2.0
+npm publish ./mapseekai-emap-gdal-plugin-0.2.1.tgz --access public --tag latest --registry=https://registry.npmjs.org
+npm view @mapseekai/emap-gdal-plugin@0.2.1 version dist.integrity --json --registry=https://registry.npmjs.org
+node test/browser/installed.mjs @mapseekai/emap-gdal-plugin@0.2.1
 ```
 
 `installed.mjs` 创建全新的临时宿主，从指定归档/registry 安装插件及基线 peer，

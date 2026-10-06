@@ -8,13 +8,13 @@
 在实际调用 `Emap.create()` 的宿主应用中安装，不需要克隆本管理仓库或本地 tgz：
 
 ```sh
-npm install @mapseekai/emap-gdal-plugin@0.2.0
+npm install @mapseekai/emap-gdal-plugin@0.2.1
 ```
 
 首次创建应用时，安装已验证的宿主依赖组合：
 
 ```sh
-npm install @mapseekai/emap@0.14.2 cordis@4.0.0-rc.10 @mapseekai/emap-gdal-plugin@0.2.0
+npm install @mapseekai/emap@0.14.2 cordis@4.0.0-rc.10 @mapseekai/emap-gdal-plugin@0.2.1
 ```
 
 已有宿主请保持兼容的 emap/Cordis 版本，不因安装插件升级其他依赖。
