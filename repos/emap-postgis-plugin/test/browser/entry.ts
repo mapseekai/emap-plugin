@@ -22,7 +22,7 @@ export async function run(options: { endpoint: string; token: string }) {
   check(document.querySelector('section[aria-label="PostGIS 查询"]'), 'SQL control is mounted');
   check(map.getRenderedLayers().length >= 3, 'emap exposes rendered vector layers');
   check(diagnostics().coloredPixels > 100, 'canvas contains rendered geometry pixels');
-  return { count: checks.length, checks, backend: 'isolated PostGIS + HTTP + Dataset Worker + real emap; delayed transport for cancellation only', emap: '0.14.1' };
+  return { count: checks.length, checks, backend: 'isolated PostGIS + HTTP + Dataset Worker + real emap; delayed transport for cancellation only', emap: '0.14.2' };
 }
 export async function dispose() {
   try {

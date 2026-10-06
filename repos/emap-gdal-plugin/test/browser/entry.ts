@@ -93,6 +93,6 @@ export async function run() {
     check(active === 0 && created === terminated, 'every owned GDAL Worker released');
     check(peak === 1, 'serial task execution limits simultaneous GDAL Workers');
     return { checks, count: checks.length, createdWorkers: created, terminatedWorkers: terminated,
-      peakWorkers: peak, overviewBytes: pyramid.overviewFile.size, upstream: '2.8.2', emap: '0.14.1' };
+      peakWorkers: peak, overviewBytes: pyramid.overviewFile.size, upstream: '2.8.2', emap: '0.14.2' };
   } finally { gdal.dispose(); }
 }

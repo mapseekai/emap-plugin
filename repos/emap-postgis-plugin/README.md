@@ -37,7 +37,7 @@ npm run dev
 `npm run test:integration` 和 `npm run test:browser` 使用隔离的临时 PostGIS Docker 容器，需要 Docker。
 `npm run verify:all` 运行全部验证。测试不连接业务数据库，临时容器由测试负责清理。
 
-该插件与其他插件共用根 Git 仓库，但拥有独立 package-lock、npm 版本与发布生命周期。Cordis 固定为 `4.0.0-rc.10` peer，emap 为 `^0.14.1`。
+该插件与其他插件共用根 Git 仓库，但拥有独立 package-lock、npm 版本与发布生命周期。Cordis 固定为 `4.0.0-rc.10` peer，emap 为 `^0.14.2`。
 当前 npm 包版本为 `0.4.0`；不要把服务端 `./server` 入口导入浏览器代码。
 ## API 与 SQL
 

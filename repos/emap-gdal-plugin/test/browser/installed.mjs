@@ -24,7 +24,7 @@ try {
   }));
   execFileSync(npm, ['install', '--save-exact', '--no-audit', '--no-fund',
     '--registry=https://registry.npmjs.org', spec,
-    '@mapseekai/emap@0.14.1', 'cordis@4.0.0-rc.10'],
+    '@mapseekai/emap@0.14.2', 'cordis@4.0.0-rc.10'],
     { cwd: workspace, stdio: 'inherit', timeout: 240000 });
   const require = createRequire(resolve(workspace, 'package.json'));
   const installed = require.resolve('@mapseekai/emap-gdal-plugin/package.json');

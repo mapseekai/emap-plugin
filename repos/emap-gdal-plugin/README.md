@@ -1,7 +1,7 @@
 # @mapseekai/emap-gdal-plugin
 
 为 emap 提供浏览器端 GDAL API 的原生 Cordis 插件。首版重点支持外部影像金字塔 `.ovr`。
-固定使用 `@mapseekai/gdal3.js@2.8.2`、`cordis@4.0.0-rc.10`，已与 `@mapseekai/emap@0.14.1` 联调。
+固定使用 `@mapseekai/gdal3.js@2.8.2`、`cordis@4.0.0-rc.10`，已与 `@mapseekai/emap@0.14.2` 联调。
 
 ## 在线安装
 
@@ -14,7 +14,7 @@ npm install @mapseekai/emap-gdal-plugin@0.2.0
 首次创建应用时，安装已验证的宿主依赖组合：
 
 ```sh
-npm install @mapseekai/emap@0.14.1 cordis@4.0.0-rc.10 @mapseekai/emap-gdal-plugin@0.2.0
+npm install @mapseekai/emap@0.14.2 cordis@4.0.0-rc.10 @mapseekai/emap-gdal-plugin@0.2.0
 ```
 
 已有宿主请保持兼容的 emap/Cordis 版本，不因安装插件升级其他依赖。
